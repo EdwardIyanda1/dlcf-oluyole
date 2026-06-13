@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import apiService from '../api';
+import apiService, { auth } from '../api';
 import Logo from '../components/Logo';
 
 const inputClass =
@@ -12,18 +12,26 @@ export default function SignupPage() {
     full_name: '', school: '', phone_number: '', address: '', sex: 'M', category: 'Adult',
     email: '', password: '',
   });
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (form.password !== confirmPassword) {
+      toast.error("Passwords don't match.");
+      return;
+    }
+    setLoading(true);
     try {
-      const res = await apiService.signup(form);
-      localStorage.setItem('dlcf_token', res.data.token);
-      localStorage.setItem('dlcf_user', JSON.stringify(res.data.user));
+      // apiService.signup() calls auth.setToken() and auth.setUser() internally
+      await apiService.signup(form);
       toast.success("Account created successfully!");
       navigate('/checkin');
     } catch (err) {
       toast.error("Signup failed. Please check your details and try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -156,11 +164,29 @@ export default function SignupPage() {
               value={form.password}
               onChange={(e) => setForm({ ...form, password: e.target.value })}
               required
+              minLength={8}
+            />
+
+            <label className="block text-xs font-semibold text-[#6B7785] uppercase tracking-wider mb-1">
+              Confirm Password
+            </label>
+            <input
+              type="password"
+              className={inputClass}
+              placeholder="••••••••"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              required
             />
           </div>
 
-          <button className="w-full bg-[#1C2541] text-[#FAF6EE] py-3 rounded-lg font-bold hover:bg-[#2a3a63] transition mt-2">
-            Create Account
+          <button
+            disabled={loading}
+            className={`w-full py-3 rounded-lg font-bold transition mt-2 ${
+              loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#1C2541] text-[#FAF6EE] hover:bg-[#2a3a63]'
+            }`}
+          >
+            {loading ? 'Creating account...' : 'Create Account'}
           </button>
         </form>
 

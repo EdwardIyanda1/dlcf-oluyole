@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import apiService from '../api';
+import apiService, { auth } from '../api';
 import Logo from '../components/Logo';
 
 const inputClass =
@@ -16,13 +16,14 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await apiService.login(form);
-      localStorage.setItem('dlcf_token', res.data.token);
-      localStorage.setItem('dlcf_user', JSON.stringify(res.data.user));
+      // apiService.login() already calls auth.setToken() and auth.setUser() internally
+      await apiService.login(form);
       toast.success("Login successful!");
       navigate('/checkin');
     } catch (err) {
       toast.error("Invalid email or password. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 

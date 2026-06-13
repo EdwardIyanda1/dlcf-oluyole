@@ -5,7 +5,8 @@ from .views import (
     ProgramViewSet, 
     RetreatSessionViewSet, 
     AttendanceViewSet,
-    check_in_by_code 
+    check_in_by_code,
+    login_view
 )
 
 router = DefaultRouter()
@@ -17,4 +18,5 @@ router.register(r'attendance', AttendanceViewSet)
 urlpatterns = [
     path('', include(router.urls)),
     path('checkin/<str:code>/', check_in_by_code, name='checkin'),
+    path('auth/login/', login_view, name='login'),
 ]

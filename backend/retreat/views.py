@@ -39,3 +39,9 @@ def check_in_by_code(request, code):
         })
     except Participant.DoesNotExist:
         return Response({"error": "Participant not found"}, status=status.HTTP_404_NOT_FOUND)
+    
+@api_view(['POST'])
+def login_view(request):
+    # Implement your authentication logic here
+    # e.g., validating credentials against your user model
+    return Response({"message": "Login successful"}, status=status.HTTP_200_OK)

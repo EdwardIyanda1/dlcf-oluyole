@@ -11,11 +11,21 @@ export default function CheckInPage() {
   const [scanning, setScanning] = useState(false);
   const scannerRef = useRef(null);
 
-  const user = JSON.parse(localStorage.getItem('dlcf_user') || 'null');
+  // Safely parse user from localStorage
+  const [user, setUser] = useState(null);
+  useEffect(() => {
+    const storedUser = localStorage.getItem('dlcf_user');
+    if (storedUser) {
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch (e) {
+        console.error("Failed to parse user", e);
+      }
+    }
+  }, []);
 
   const lookup = async (value) => {
     setError('');
-    // Strip URL params if a full registration link is scanned
     const cleanCode = value.includes('?') ? value.split('=').pop() : value;
     
     try {
@@ -33,7 +43,6 @@ export default function CheckInPage() {
     if (code.trim()) lookup(code.trim());
   };
 
-  // Start/stop QR scanner
   useEffect(() => {
     if (!scanning) return;
     
@@ -49,7 +58,7 @@ export default function CheckInPage() {
           lookup(decodedText);
         }).catch((err) => console.error("QR Stop error:", err));
       },
-      (err) => { /* Ignore frame errors */ }
+      (err) => {}
     ).catch(() => {
       setError('Could not access camera.');
       toast.error("Could not access camera.");
@@ -77,9 +86,10 @@ export default function CheckInPage() {
             className="text-3xl font-bold text-[#1C2541]"
             style={{ fontFamily: "'Fraunces', Georgia, serif" }}
           >
-            {user ? `Welcome, ${user.full_name.split(' ')[0]}` : 'Check In'}
+            {/* Safely access full_name using optional chaining */}
+            {user ? `Welcome, ${user.full_name?.split(' ')[0]}` : 'Check In'}
           </h1>
-          {user && (
+          {user?.code && (
             <p className="text-[#6B7785] mt-1">
               Your code: <span className="font-mono font-bold text-[#1C2541]">{user.code}</span>
             </p>
@@ -88,7 +98,6 @@ export default function CheckInPage() {
 
         {!result && (
           <div className="bg-white p-8 rounded-2xl shadow-sm border border-[#1C2541]/10">
-            {/* QR Scanner */}
             <div className="mb-6">
               {scanning ? (
                 <div id="qr-reader" className="rounded-lg overflow-hidden" />
@@ -116,7 +125,6 @@ export default function CheckInPage() {
               <div className="flex-1 h-px bg-[#1C2541]/10" />
             </div>
 
-            {/* Manual code entry */}
             <form onSubmit={handleCodeSubmit}>
               <label className="block text-xs font-semibold text-[#6B7785] uppercase tracking-wider mb-1">
                 Enter your code
@@ -136,7 +144,6 @@ export default function CheckInPage() {
           </div>
         )}
 
-        {/* Result */}
         {result && (
           <div className="bg-white p-8 rounded-2xl shadow-sm border border-[#1C2541]/10 text-center">
             <div className="w-14 h-14 rounded-full bg-[#D4A857]/15 flex items-center justify-center mx-auto mb-4">

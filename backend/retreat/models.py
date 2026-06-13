@@ -1,5 +1,5 @@
 from django.db import models
-
+import datetime
 class Participant(models.Model):
     CATEGORY_CHOICES = [('Adult', 'Adult'), ('Campus', 'Campus'), ('Youth', 'Youth'), ('Children', 'Children')]
     full_name = models.CharField(max_length=200)
@@ -18,15 +18,36 @@ class Participant(models.Model):
     def __str__(self):
         return self.full_name
     
+
+
 class Program(models.Model):
-    name = models.CharField(max_length=200) # e.g., "2025 December Retreat"
+    name = models.CharField(max_length=200)
     theme = models.CharField(max_length=200)
+    # Remove 'default' and allow blank because we generate it in save()
+    code = models.CharField(max_length=20, unique=True, blank=True)
     start_date = models.DateField()
     end_date = models.DateField()
 
+    def save(self, *args, **kwargs):
+        if not self.code:
+            # Generate a code like: DLCF-NAME-2026
+            year = datetime.date.today().year
+            # Extract first 3 chars of name, uppercase, and append year
+            prefix = self.name[:3].upper()
+            self.code = f"DLCF-{prefix}-{year}"
+            
+            # Ensure uniqueness if multiple programs have same name/year
+            count = 1
+            original_code = self.code
+            while Program.objects.filter(code=self.code).exists():
+                self.code = f"{original_code}-{count}"
+                count += 1
+                
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return self.name
-
+    
 class RetreatSession(models.Model):
     program = models.ForeignKey(Program, on_delete=models.CASCADE, related_name='sessions')
     title = models.CharField(max_length=200) # e.g., "Morning Message"

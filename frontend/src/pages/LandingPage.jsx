@@ -11,10 +11,16 @@ export default function LandingPage() {
     const fetchProgram = async () => {
       try {
         const res = await apiService.getSessions();
-        // Ensure we are working with an array
-        setSessions(Array.isArray(res.data) ? res.data : []);
+        
+        // Robust data extraction: 
+        // 1. If res.data is an array, use it.
+        // 2. If res.data has a 'results' key (DRF pagination), use it.
+        // 3. Otherwise, default to an empty array.
+        const data = Array.isArray(res.data) ? res.data : (res.data?.results || []);
+        setSessions(data);
       } catch (err) {
         console.error("Failed to fetch program", err);
+        setSessions([]);
       }
     };
     fetchProgram();
@@ -120,12 +126,12 @@ export default function LandingPage() {
         <div className="relative">
           <div className="absolute left-0 right-0 top-5 h-1 rounded-full bg-gradient-to-r from-[#D4A857] via-[#6E2C3A] to-[#1C2541]" />
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 relative">
-            {sessions.length > 0 ? (
+            {Array.isArray(sessions) && sessions.length > 0 ? (
               sessions.map((p) => (
-                <div key={p.id} className="text-center">
+                <div key={p.id || p.title} className="text-center">
                   <div className="w-3 h-3 rounded-full bg-[#1C2541] border-4 border-[#FAF6EE] mx-auto mb-4 mt-2 relative z-10" />
                   <p className="text-xs font-semibold text-[#6E2C3A] tracking-widest uppercase mb-1">
-                    {p.start_time ? p.start_time.slice(0, 5) : '--:--'}
+                    {p.start_time ? p.start_time.toString().slice(0, 5) : '--:--'}
                   </p>
                   <p className="font-bold text-[#1C2541]">{p.title}</p>
                 </div>

@@ -5,7 +5,7 @@ import axios from 'axios';
 const DEBUG = false; 
 
 const api = axios.create({
-  baseURL: 'http://127.0.0.1:8000/api',
+  baseURL: 'http://10.90.250.159:8000/api',
   headers: { 'Content-Type': 'application/json' },
 });
 
@@ -24,7 +24,9 @@ const apiService = {
     return await api.get('/participants/');
   },
   
-  getSessions: () => axios.get('/api/sessions/'),
+  getSessions: async () => {
+    return await api.get('/sessions/');
+  },
 
   postParticipant: async (data) => {
     if (DEBUG) {

@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { toast } from 'react-toastify';
 import apiService from '../../api';
 import { QRCodeSVG } from 'qrcode.react';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 export default function AdminPrograms() {
   const [retreats, setRetreats] = useState([]);
@@ -10,6 +12,70 @@ export default function AdminPrograms() {
   const [newRetreat, setNewRetreat] = useState({ name: '', theme: '', code: '', start_date: '', end_date: '' });
   
   const qrRefs = useRef({});
+
+  const generateRetreatPDF = async (retreat) => {
+    const doc = new jsPDF();
+    const svg = qrRefs.current[retreat.id];
+
+    console.log("Generating PDF for:", retreat); 
+
+    if (!retreat.code) {
+        toast.error("Retreat code is missing!");
+        return;
+    }
+
+    if (!svg) {
+      toast.error("QR Code not ready, please wait.");
+      return;
+    }
+
+    // 1. Styling: Header Background
+    doc.setFillColor(28, 37, 65); // #1C2541
+    doc.rect(0, 0, 210, 40, 'F');
+
+    // 2. Add Title
+    doc.setFontSize(24);
+    doc.setTextColor(255, 255, 255); // White
+    doc.text(retreat.name, 20, 25);
+    
+    // 3. Add Details Section
+    doc.setFontSize(12);
+    doc.setTextColor(28, 37, 65);
+    doc.text(`Theme: ${retreat.theme}`, 20, 55);
+    doc.text(`Dates: ${retreat.start_date} to ${retreat.end_date}`, 20, 62);
+    doc.text(`Registration Code: ${retreat.code}`, 20, 69);
+
+    // 4. Draw a border box for the QR code
+    doc.setDrawColor(28, 37, 65);
+    doc.rect(55, 90, 100, 100); 
+
+    // 5. Render Large QR Code (centered)
+    const serializer = new XMLSerializer();
+    const svgString = serializer.serializeToString(svg);
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+    const svgBlob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
+    const url = URL.createObjectURL(svgBlob);
+
+    img.onload = () => {
+      canvas.width = img.width;
+      canvas.height = img.height;
+      ctx.drawImage(img, 0, 0);
+      const pngData = canvas.toDataURL("image/png");
+      
+      // Larger QR Code (90mm x 90mm)
+      doc.addImage(pngData, 'PNG', 60, 95, 90, 90);
+      
+      // Footer text
+      doc.setFontSize(16);
+      doc.text("SCAN TO REGISTER", 105, 200, { align: 'center' });
+      doc.text(`Registration Code: ${retreat.code}`, 20, 69);
+      doc.save(`${retreat.name}_Registration_Card.pdf`);
+      URL.revokeObjectURL(url);
+    };
+    img.src = url;
+  };
 
   const fetchRetreats = async () => {
     try {
@@ -25,47 +91,19 @@ export default function AdminPrograms() {
     fetchRetreats();
   }, []);
 
-  const downloadQRCode = (retreatId) => {
-    const svg = qrRefs.current[retreatId];
-    if (!svg) {
-      toast.error("QR Code not ready.");
-      return;
-    }
-
-    const serializer = new XMLSerializer();
-    const svgBlob = new Blob([serializer.serializeToString(svg)], { type: "image/svg+xml" });
-    const url = URL.createObjectURL(svgBlob);
-    
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `Retreat_QR_${retreatId}.svg`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-    toast.info("QR Code downloaded!");
-  };
-
   const handleAddRetreat = async () => {
     if (!newRetreat.name || !newRetreat.code) {
       toast.warning("Please fill in the Name and Code fields.");
       return;
     }
     try {
-      await apiService.postProgram({
-        name: newRetreat.name,
-        theme: newRetreat.theme,
-        code: newRetreat.code,
-        start_date: newRetreat.start_date,
-        end_date: newRetreat.end_date
-      });
+      await apiService.postProgram(newRetreat);
       await fetchRetreats();
       setNewRetreat({ name: '', theme: '', code: '', start_date: '', end_date: '' });
       setShowAddRetreat(false);
       toast.success("Retreat created successfully!");
     } catch (err) {
       toast.error("Failed to save retreat.");
-      console.error("Failed to save program", err);
     }
   };
 
@@ -78,7 +116,7 @@ export default function AdminPrograms() {
         
         <div className="bg-white p-6 md:p-8 rounded-2xl border border-[#1C2541]/10">
             <h3 className="font-bold text-[#1C2541] mb-4">Daily Sessions</h3>
-            <p className="text-[#6B7785]">Add, edit, and view attendance for sessions belonging to {selectedRetreat.name}.</p>
+            <p className="text-[#6B7785]">Manage sessions for {selectedRetreat.name}.</p>
         </div>
       </div>
     );
@@ -91,7 +129,7 @@ export default function AdminPrograms() {
           <p className="text-[#6E2C3A] text-xs font-semibold tracking-[0.25em] uppercase mb-1">Management</p>
           <h2 className="text-3xl font-bold text-[#1C2541]" style={{ fontFamily: "'Fraunces', Georgia, serif" }}>Retreat Programs</h2>
         </div>
-        <button onClick={() => setShowAddRetreat(true)} className="w-full md:w-auto bg-[#6E2C3A] text-[#FAF6EE] px-6 py-3 rounded-lg font-semibold hover:bg-[#8a3a4b] transition">
+        <button onClick={() => setShowAddRetreat(true)} className="bg-[#6E2C3A] text-[#FAF6EE] px-6 py-3 rounded-lg font-semibold hover:bg-[#8a3a4b] transition">
           + Add New Retreat
         </button>
       </div>
@@ -101,7 +139,7 @@ export default function AdminPrograms() {
           <h3 className="font-bold text-[#1C2541] mb-6">Define New Retreat</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <input className="border p-3 rounded-lg" placeholder="Retreat Name" value={newRetreat.name} onChange={e => setNewRetreat({...newRetreat, name: e.target.value})} />
-            <input className="border p-3 rounded-lg" placeholder="Retreat Code (e.g. DLCF-DEC25)" value={newRetreat.code} onChange={e => setNewRetreat({...newRetreat, code: e.target.value})} />
+            <input className="border p-3 rounded-lg" placeholder="Retreat Code" value={newRetreat.code} onChange={e => setNewRetreat({...newRetreat, code: e.target.value})} />
             <input className="border p-3 rounded-lg col-span-1 md:col-span-2" placeholder="Theme" value={newRetreat.theme} onChange={e => setNewRetreat({...newRetreat, theme: e.target.value})} />
             <input className="border p-3 rounded-lg" type="date" value={newRetreat.start_date} onChange={e => setNewRetreat({...newRetreat, start_date: e.target.value})} />
             <input className="border p-3 rounded-lg" type="date" value={newRetreat.end_date} onChange={e => setNewRetreat({...newRetreat, end_date: e.target.value})} />
@@ -123,9 +161,9 @@ export default function AdminPrograms() {
             
             <div className="flex items-center gap-4 w-full md:w-auto">
               <div 
-                className="p-2 bg-white border border-[#1C2541]/10 rounded-lg cursor-pointer hover:bg-[#FAF6EE] transition flex-shrink-0"
-                onClick={() => downloadQRCode(r.id)}
-                title="Click to download QR"
+                className="p-2 bg-white border border-[#1C2541]/10 rounded-lg cursor-pointer hover:bg-[#FAF6EE] transition"
+                onClick={() => generateRetreatPDF(r)}
+                title="Download PDF Report"
               >
                 <QRCodeSVG 
                   ref={(el) => (qrRefs.current[r.id] = el)}
@@ -133,7 +171,7 @@ export default function AdminPrograms() {
                   size={48} 
                 />
               </div>
-              <button onClick={() => setSelectedRetreat(r)} className="flex-1 md:flex-none bg-[#1C2541] text-[#FAF6EE] px-4 py-2 rounded-lg text-sm font-bold hover:bg-[#2a3a63]">
+              <button onClick={() => setSelectedRetreat(r)} className="bg-[#1C2541] text-[#FAF6EE] px-4 py-2 rounded-lg text-sm font-bold hover:bg-[#2a3a63]">
                 Manage Sessions
               </button>
             </div>

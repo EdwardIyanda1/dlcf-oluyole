@@ -10,9 +10,11 @@ const inputClass =
 export default function LoginPage() {
   const [form, setForm] = useState({ email: '', password: '' });
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
     try {
       const res = await apiService.login(form);
       localStorage.setItem('dlcf_token', res.data.token);
@@ -69,8 +71,13 @@ export default function LoginPage() {
               required
             />
 
-            <button className="w-full bg-[#1C2541] text-[#FAF6EE] py-3 rounded-lg font-bold hover:bg-[#2a3a63] transition">
-              Log In
+            <button 
+              disabled={loading} 
+              className={`w-full py-3 rounded-lg font-bold transition ${
+                loading ? 'bg-gray-400' : 'bg-[#1C2541] text-[#FAF6EE] hover:bg-[#2a3a63]'
+              }`}
+            >
+              {loading ? 'Logging in...' : 'Log In'}
             </button>
           </form>
         </div>

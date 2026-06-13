@@ -12,7 +12,7 @@ from .views import (
 router = DefaultRouter()
 router.register(r'participants', ParticipantViewSet)
 router.register(r'programs', ProgramViewSet)
-router.register(r'sessions', RetreatSessionViewSet)
+router.register(r'sessions', RetreatSessionViewSet, basename='retreatsession')
 router.register(r'attendance', AttendanceViewSet)
 
 urlpatterns = [

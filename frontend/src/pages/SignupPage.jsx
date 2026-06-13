@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import apiService from '../api';
 import Logo from '../components/Logo';
 
@@ -15,10 +16,15 @@ export default function SignupPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const res = await apiService.signup(form);
-    localStorage.setItem('dlcf_token', res.data.token);
-    localStorage.setItem('dlcf_user', JSON.stringify(res.data.user));
-    navigate('/checkin');
+    try {
+      const res = await apiService.signup(form);
+      localStorage.setItem('dlcf_token', res.data.token);
+      localStorage.setItem('dlcf_user', JSON.stringify(res.data.user));
+      toast.success("Account created successfully!");
+      navigate('/checkin');
+    } catch (err) {
+      toast.error("Signup failed. Please check your details and try again.");
+    }
   };
 
   return (

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Html5Qrcode } from 'html5-qrcode';
+import { toast } from 'react-toastify';
 import apiService from '../api';
 import Logo from '../components/Logo';
 
@@ -14,11 +15,16 @@ export default function CheckInPage() {
 
   const lookup = async (value) => {
     setError('');
+    // Strip URL params if a full registration link is scanned
+    const cleanCode = value.includes('?') ? value.split('=').pop() : value;
+    
     try {
-      const res = await apiService.checkInByCode(value);
+      const res = await apiService.checkInByCode(cleanCode);
       setResult(res.data);
+      toast.success("Check-in successful!");
     } catch {
       setError('Code not found. Check it and try again.');
+      toast.error("Code not found. Check it and try again.");
     }
   };
 
@@ -30,6 +36,7 @@ export default function CheckInPage() {
   // Start/stop QR scanner
   useEffect(() => {
     if (!scanning) return;
+    
     const qr = new Html5Qrcode('qr-reader');
     scannerRef.current = qr;
 
@@ -37,15 +44,21 @@ export default function CheckInPage() {
       { facingMode: 'environment' },
       { fps: 10, qrbox: 220 },
       (decodedText) => {
-        qr.stop();
-        setScanning(false);
-        lookup(decodedText);
+        qr.stop().then(() => {
+          setScanning(false);
+          lookup(decodedText);
+        }).catch((err) => console.error("QR Stop error:", err));
       },
-      () => {} // ignore frame errors
-    ).catch(() => setError('Could not access camera.'));
+      (err) => { /* Ignore frame errors */ }
+    ).catch(() => {
+      setError('Could not access camera.');
+      toast.error("Could not access camera.");
+    });
 
     return () => {
-      qr.stop().catch(() => {});
+      if (scannerRef.current) {
+        scannerRef.current.stop().catch(() => {});
+      }
     };
   }, [scanning]);
 
@@ -145,8 +158,7 @@ export default function CheckInPage() {
               </span>
             </div>
             <p className="text-sm text-[#6B7785] mb-6">
-              These details have been sent to the registration unit. Hand any
-              physical items to the usher and proceed inside.
+              These details have been sent to the registration unit.
             </p>
             <button
               onClick={() => { setResult(null); setCode(''); }}

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { toast } from 'react-toastify';
 import apiService from '../api';
 import Logo from '../components/Logo';
 
@@ -13,8 +14,13 @@ export default function RegistrationPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await apiService.postParticipant(formData);
-    setSubmitted(true);
+    try {
+      await apiService.postParticipant(formData);
+      toast.success("Registration successful! We can't wait to see you.");
+      setSubmitted(true);
+    } catch (err) {
+      toast.error("Failed to register. Please check your information and try again.");
+    }
   };
 
   if (submitted) {
@@ -36,7 +42,10 @@ export default function RegistrationPage() {
             grow with you.
           </p>
           <button
-            onClick={() => setSubmitted(false)}
+            onClick={() => {
+                setSubmitted(false);
+                setFormData({ full_name: '', school: '', phone_number: '', address: '', sex: 'M', category: 'Adult' });
+            }}
             className="text-[#6E2C3A] font-semibold underline"
           >
             Register another participant

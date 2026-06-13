@@ -1,8 +1,8 @@
 // frontend/src/api.js
 import axios from 'axios';
-
+// ipconfig "https://10.90.250.133:5173",
 // Toggle this to false when your Django backend is ready
-const DEBUG = true; 
+const DEBUG = false; 
 
 const api = axios.create({
   baseURL: 'http://127.0.0.1:8000/api',
@@ -30,6 +30,14 @@ const apiService = {
       return { status: 201 };
     }
     return await api.post('/participants/', data);
+  },
+
+  getPrograms: async () => {
+    return await api.get('/programs/');
+  },
+
+  postProgram: async (data) => {
+    return await api.post('/programs/', data);
   },
 
   // --- Auth ---

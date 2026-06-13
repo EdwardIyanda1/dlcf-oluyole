@@ -23,10 +23,6 @@ const apiService = {
     }
     return await api.get('/participants/');
   },
-  
-  getSessions: async () => {
-    return await api.get('/sessions/');
-  },
 
   postParticipant: async (data) => {
     if (DEBUG) {
@@ -36,12 +32,37 @@ const apiService = {
     return await api.post('/participants/', data);
   },
 
+  // --- Retreat Programs ---
   getPrograms: async () => {
     return await api.get('/programs/');
   },
 
   postProgram: async (data) => {
     return await api.post('/programs/', data);
+  },
+
+  // --- Sessions / Messages ---
+  // pass a programId to get sessions for one program, or omit for all
+  getSessions: async (programId) => {
+    return await api.get(programId ? `/programs/${programId}/sessions/` : '/sessions/');
+  },
+
+  createSession: async (data) => {
+    // data should include { program, title, speaker, date, time }
+    return await api.post('/sessions/', data);
+  },
+
+  // --- Attendance ---
+  // returns participants for this session, each with a `present` boolean
+  getAttendance: async (sessionId) => {
+    return await api.get(`/sessions/${sessionId}/attendance/`);
+  },
+
+  markAttendance: async (sessionId, participantId, present) => {
+    return await api.post(`/sessions/${sessionId}/attendance/`, {
+      participant: participantId,
+      present,
+    });
   },
 
   // --- Auth ---

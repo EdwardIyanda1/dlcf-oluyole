@@ -17,11 +17,9 @@ export default function AdminPrograms() {
     const doc = new jsPDF();
     const svg = qrRefs.current[retreat.id];
 
-    console.log("Generating PDF for:", retreat); 
-
     if (!retreat.code) {
-        toast.error("Retreat code is missing!");
-        return;
+      toast.error("Retreat code is missing!");
+      return;
     }
 
     if (!svg) {
@@ -29,27 +27,88 @@ export default function AdminPrograms() {
       return;
     }
 
-    // 1. Styling: Header Background
-    doc.setFillColor(28, 37, 65); // #1C2541
-    doc.rect(0, 0, 210, 40, 'F');
+    const NAVY = [28, 37, 65];     // #1C2541
+    const GOLD = [212, 168, 87];   // #D4A857
+    const CREAM = [250, 246, 238]; // #FAF6EE
+    const MAROON = [110, 44, 58];  // #6E2C3A
+    const SLATE = [107, 119, 133]; // #6B7785
 
-    // 2. Add Title
+    // 0. Page background
+    doc.setFillColor(...CREAM);
+    doc.rect(0, 0, 210, 297, 'F');
+
+    // 1. Header band (navy)
+    doc.setFillColor(...NAVY);
+    doc.rect(0, 0, 210, 45, 'F');
+    // gold accent line under header
+    doc.setFillColor(...GOLD);
+    doc.rect(0, 45, 210, 1.5, 'F');
+
+    // 2. Eyebrow + title in header
+    doc.setFont('times', 'bold');
+    doc.setFontSize(10);
+    doc.setTextColor(...GOLD);
+    doc.text('DEEPER LIFE CAMPUS FELLOWSHIP  \u00B7  LCU', 20, 16);
+
     doc.setFontSize(24);
-    doc.setTextColor(255, 255, 255); // White
-    doc.text(retreat.name, 20, 25);
-    
-    // 3. Add Details Section
-    doc.setFontSize(12);
-    doc.setTextColor(28, 37, 65);
-    doc.text(`Theme: ${retreat.theme}`, 20, 55);
-    doc.text(`Dates: ${retreat.start_date} to ${retreat.end_date}`, 20, 62);
-    doc.text(`Registration Code: ${retreat.code}`, 20, 69);
+    doc.setTextColor(...CREAM);
+    doc.text(retreat.name, 35, 32);
 
-    // 4. Draw a border box for the QR code
-    doc.setDrawColor(28, 37, 65);
-    doc.rect(55, 90, 100, 100); 
+    // Logo (top-left of header)
+    const loadImageAsDataURL = (src) =>
+      new Promise((resolve) => {
+        const logoImg = new Image();
+        logoImg.crossOrigin = 'anonymous';
+        logoImg.onload = () => {
+          const c = document.createElement('canvas');
+          c.width = logoImg.width;
+          c.height = logoImg.height;
+          c.getContext('2d').drawImage(logoImg, 0, 0);
+          resolve(c.toDataURL('image/png'));
+        };
+        logoImg.onerror = () => resolve(null);
+        logoImg.src = src;
+      });
 
-    // 5. Render Large QR Code (centered)
+    const logoData = await loadImageAsDataURL('/logo.png');
+    if (logoData) {
+      doc.addImage(logoData, 'PNG', 18, 12, 14, 14);
+    }
+
+    // 3. Details card below header
+    doc.setFillColor(255, 255, 255);
+    doc.roundedRect(20, 58, 170, 28, 3, 3, 'F');
+    doc.setDrawColor(...GOLD);
+    doc.setLineWidth(0.6);
+    doc.roundedRect(20, 58, 170, 28, 3, 3, 'S');
+
+    doc.setFont('times', 'bold');
+    doc.setFontSize(11);
+    doc.setTextColor(...NAVY);
+    doc.text(retreat.theme || 'Retreat Program', 28, 70);
+
+    doc.setFont('times', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(...SLATE);
+    doc.text(`${retreat.start_date}  to  ${retreat.end_date}`, 28, 78);
+
+    doc.setFont('times', 'bold');
+    doc.setTextColor(...MAROON);
+    doc.text(`CODE: ${retreat.code}`, 145, 78);
+
+    // 4. QR section heading
+    doc.setFont('times', 'bold');
+    doc.setFontSize(14);
+    doc.setTextColor(...NAVY);
+    doc.text('Scan to Register', 105, 100, { align: 'center' });
+
+    // 5. QR code with gold border box
+    doc.setFillColor(255, 255, 255);
+    doc.roundedRect(55, 108, 100, 100, 4, 4, 'F');
+    doc.setDrawColor(...GOLD);
+    doc.setLineWidth(1);
+    doc.roundedRect(55, 108, 100, 100, 4, 4, 'S');
+
     const serializer = new XMLSerializer();
     const svgString = serializer.serializeToString(svg);
     const canvas = document.createElement('canvas');
@@ -63,14 +122,29 @@ export default function AdminPrograms() {
       canvas.height = img.height;
       ctx.drawImage(img, 0, 0);
       const pngData = canvas.toDataURL("image/png");
-      
-      // Larger QR Code (90mm x 90mm)
-      doc.addImage(pngData, 'PNG', 60, 95, 90, 90);
-      
-      // Footer text
-      doc.setFontSize(16);
-      doc.text("SCAN TO REGISTER", 105, 200, { align: 'center' });
-      doc.text(`Registration Code: ${retreat.code}`, 20, 69);
+
+      // QR image inside the border box, centered (90mm x 90mm)
+      doc.addImage(pngData, 'PNG', 60, 113, 90, 90);
+
+      // 6. Footer code repeat + closing line
+      doc.setFont('times', 'bold');
+      doc.setFontSize(12);
+      doc.setTextColor(...MAROON);
+      doc.text(`Registration Code: ${retreat.code}`, 105, 222, { align: 'center' });
+
+      doc.setFont('times', 'italic');
+      doc.setFontSize(10);
+      doc.setTextColor(...SLATE);
+      doc.text('Present this card at the registration desk or scan to register online.', 105, 232, { align: 'center' });
+
+      // bottom navy strip
+      doc.setFillColor(...NAVY);
+      doc.rect(0, 285, 210, 12, 'F');
+      doc.setFont('times', 'normal');
+      doc.setFontSize(9);
+      doc.setTextColor(...GOLD);
+      doc.text('Deeper Life Campus Fellowship, Lead City University', 105, 292, { align: 'center' });
+
       doc.save(`${retreat.name}_Registration_Card.pdf`);
       URL.revokeObjectURL(url);
     };
@@ -167,7 +241,7 @@ export default function AdminPrograms() {
               >
                 <QRCodeSVG 
                   ref={(el) => (qrRefs.current[r.id] = el)}
-                  value={`${window.location.origin}/register?code=${r.code}`} 
+                  value={`${window.location.origin}/register?retreat_code=${r.code}`}
                   size={48} 
                 />
               </div>

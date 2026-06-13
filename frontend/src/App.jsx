@@ -9,7 +9,9 @@ import CheckInPage from './pages/CheckInPage';
 import AdminLayout from './components/AdminLayout';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminPrograms from './pages/admin/AdminPrograms';
+import AdminAttendance from './pages/admin/AdminAttendance';
 import AdminParticipants from './pages/admin/AdminParticipants';
+import NotFoundPage from './pages/NotFoundPage';
 
 function App() {
   return (
@@ -25,6 +27,7 @@ function App() {
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<AdminDashboard />} />
           <Route path="programs" element={<AdminPrograms />} />
+          <Route path="attendance" element={<AdminAttendance />} />
           <Route path="participants" element={<AdminParticipants />} />
         </Route>
       </Routes>

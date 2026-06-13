@@ -8,7 +8,7 @@ const inputClass =
 
 export default function RegistrationPage() {
   const [formData, setFormData] = useState({
-    full_name: '', school: '', phone_number: '', address: '', sex: 'M', category: 'Adult',
+    full_name: '', school: '', phone_number: '', address: '', sex: 'M', category: 'Adult', retreat_code: retreatCode || '',
   });
   const [submitted, setSubmitted] = useState(false);
 

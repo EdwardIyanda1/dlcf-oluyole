@@ -15,9 +15,11 @@ class ProgramSerializer(serializers.ModelSerializer):
     class Meta:
         model = Program
         fields = '__all__'
+        read_only_fields = ['code']
 
 
 class RetreatSessionSerializer(serializers.ModelSerializer):
     class Meta:
         model = RetreatSession
         fields = '__all__'
+

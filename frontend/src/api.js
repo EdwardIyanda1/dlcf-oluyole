@@ -24,6 +24,8 @@ const apiService = {
     return await api.get('/participants/');
   },
   
+  getSessions: () => axios.get('/api/sessions/'),
+
   postParticipant: async (data) => {
     if (DEBUG) {
       console.log("DEBUG MODE: Mocking POST request", data);

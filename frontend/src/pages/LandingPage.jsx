@@ -1,15 +1,24 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import apiService from '../api';
 import Logo from '../components/Logo';
 
-const PROGRAM = [
-  { time: '6:00 AM', title: 'Morning Devotion' },
-  { time: '10:00 AM', title: 'Bible Study' },
-  { time: '4:00 PM', title: 'Leadership Training' },
-  { time: '7:00 PM', title: 'Evening Revival' },
-];
-
 export default function LandingPage() {
+  const [sessions, setSessions] = useState([]);
   const user = JSON.parse(localStorage.getItem('dlcf_user') || 'null');
+
+  useEffect(() => {
+    const fetchProgram = async () => {
+      try {
+        const res = await apiService.getSessions();
+        // Ensure we are working with an array
+        setSessions(Array.isArray(res.data) ? res.data : []);
+      } catch (err) {
+        console.error("Failed to fetch program", err);
+      }
+    };
+    fetchProgram();
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#FAF6EE]">
@@ -38,7 +47,7 @@ export default function LandingPage() {
             <Logo size={72} light withText={false} />
           </div>
           <p className="text-[#D4A857] text-sm font-semibold tracking-[0.3em] uppercase mb-4">
-            Deeper Life Campus Fellowship &mdash; Lead City University
+            Deeper Life Campus Fellowship &mdash; Oluyole Region { new Date().getFullYear() }
           </p>
           <h1
             className="text-5xl md:text-6xl font-bold text-[#FAF6EE] mb-6 leading-tight"
@@ -111,15 +120,19 @@ export default function LandingPage() {
         <div className="relative">
           <div className="absolute left-0 right-0 top-5 h-1 rounded-full bg-gradient-to-r from-[#D4A857] via-[#6E2C3A] to-[#1C2541]" />
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 relative">
-            {PROGRAM.map((p) => (
-              <div key={p.title} className="text-center">
-                <div className="w-3 h-3 rounded-full bg-[#1C2541] border-4 border-[#FAF6EE] mx-auto mb-4 mt-2 relative z-10" />
-                <p className="text-xs font-semibold text-[#6E2C3A] tracking-widest uppercase mb-1">
-                  {p.time}
-                </p>
-                <p className="font-bold text-[#1C2541]">{p.title}</p>
-              </div>
-            ))}
+            {sessions.length > 0 ? (
+              sessions.map((p) => (
+                <div key={p.id} className="text-center">
+                  <div className="w-3 h-3 rounded-full bg-[#1C2541] border-4 border-[#FAF6EE] mx-auto mb-4 mt-2 relative z-10" />
+                  <p className="text-xs font-semibold text-[#6E2C3A] tracking-widest uppercase mb-1">
+                    {p.start_time ? p.start_time.slice(0, 5) : '--:--'}
+                  </p>
+                  <p className="font-bold text-[#1C2541]">{p.title}</p>
+                </div>
+              ))
+            ) : (
+              <p className="col-span-full text-center text-[#6B7785]">No sessions scheduled for today.</p>
+            )}
           </div>
         </div>
       </section>

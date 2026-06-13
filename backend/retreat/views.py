@@ -4,7 +4,9 @@ from rest_framework.response import Response
 from rest_framework import status
 from .models import Participant, Program, Attendance 
 from .serializers import AttendanceSerializer, RetreatSession
+from datetime import date
 from .serializers import ParticipantSerializer, ProgramSerializer, RetreatSessionSerializer, AttendanceSerializer
+
 class ParticipantViewSet(viewsets.ModelViewSet):
     queryset = Participant.objects.all()
 class ProgramViewSet(viewsets.ModelViewSet):
@@ -18,7 +20,8 @@ class ParticipantViewSet(viewsets.ModelViewSet):
 class RetreatSessionViewSet(viewsets.ModelViewSet):
     queryset = RetreatSession.objects.all()
     serializer_class = RetreatSessionSerializer    
-
+    queryset = RetreatSession.objects.filter(day=date.today())
+    serializer_class = RetreatSessionSerializer
 class AttendanceViewSet(viewsets.ModelViewSet):
     queryset = Attendance.objects.all()
     serializer_class = AttendanceSerializer

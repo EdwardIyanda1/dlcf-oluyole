@@ -15,9 +15,10 @@ export default function LoginPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+
     try {
-      // apiService.login() already calls auth.setToken() and auth.setUser() internally
-      await apiService.login(form);
+      // apiService.login() calls auth.setToken() and auth.setUser() internally
+      await apiService.login({ email: form.email, password: form.password });
       toast.success("Login successful!");
       navigate('/checkin');
     } catch (err) {

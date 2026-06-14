@@ -12,6 +12,7 @@ import AdminPrograms from './pages/admin/AdminPrograms';
 import AdminAttendance from './pages/admin/AdminAttendance';
 import AdminParticipants from './pages/admin/AdminParticipants';
 import NotFoundPage from './pages/NotFoundPage';
+import AdminReports from './pages/admin/AdminReports';
 
 function App() {
   return (
@@ -27,6 +28,7 @@ function App() {
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<AdminDashboard />} />
           <Route path="programs" element={<AdminPrograms />} />
+          <Route path="reports" element={<AdminReports />} />
           <Route path="attendance" element={<AdminAttendance />} />
           <Route path="participants" element={<AdminParticipants />} />
         </Route>

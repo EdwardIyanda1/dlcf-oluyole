@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import apiService from '../api';
 import Logo from '../components/Logo';
@@ -6,21 +7,40 @@ import Logo from '../components/Logo';
 const inputClass =
   'w-full border border-[#1C2541]/15 bg-[#FAF6EE] focus:bg-white p-3 rounded-lg mb-4 outline-none focus:ring-2 focus:ring-[#D4A857] transition';
 
+const EMPTY_FORM = (retreatCode = '') => ({
+  full_name: '', school: '', phone_number: '', address: '',
+  sex: 'M', category: 'Adult', retreat_code: retreatCode,
+});
+
 export default function RegistrationPage() {
-  const [formData, setFormData] = useState({
-    full_name: '', school: '', phone_number: '', address: '', sex: 'M', category: 'Adult', retreat_code: retreatCode || '',
-  });
+  // Read ?retreat_code=DLCF-XXX from the QR scan URL — falls back to ''
+  const [searchParams] = useSearchParams();
+  const retreatCode = searchParams.get('retreat_code') || '';
+
+  const [formData, setFormData] = useState(EMPTY_FORM(retreatCode));
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
     try {
       await apiService.postParticipant(formData);
       toast.success("Registration successful! We can't wait to see you.");
       setSubmitted(true);
     } catch (err) {
-      toast.error("Failed to register. Please check your information and try again.");
+      const msg = err.response?.data
+        ? Object.values(err.response.data).flat().join(' ')
+        : "Failed to register. Please check your information and try again.";
+      toast.error(msg);
+    } finally {
+      setLoading(false);
     }
+  };
+
+  const handleReset = () => {
+    setSubmitted(false);
+    setFormData(EMPTY_FORM(retreatCode)); // preserve retreat_code on reset
   };
 
   if (submitted) {
@@ -41,13 +61,7 @@ export default function RegistrationPage() {
             Your spot for the retreat is confirmed. We can't wait to worship and
             grow with you.
           </p>
-          <button
-            onClick={() => {
-                setSubmitted(false);
-                setFormData({ full_name: '', school: '', phone_number: '', address: '', sex: 'M', category: 'Adult' });
-            }}
-            className="text-[#6E2C3A] font-semibold underline"
-          >
+          <button onClick={handleReset} className="text-[#6E2C3A] font-semibold underline">
             Register another participant
           </button>
         </div>
@@ -72,6 +86,11 @@ export default function RegistrationPage() {
           >
             Reserve Your Place
           </h1>
+          {retreatCode && (
+            <p className="text-xs text-[#6B7785] mt-2 font-mono">
+              Retreat: <span className="font-bold text-[#1C2541]">{retreatCode}</span>
+            </p>
+          )}
         </div>
 
         <form
@@ -152,8 +171,13 @@ export default function RegistrationPage() {
             ))}
           </select>
 
-          <button className="w-full bg-[#1C2541] text-[#FAF6EE] py-3 rounded-lg font-bold hover:bg-[#2a3a63] transition mt-2">
-            Complete Registration
+          <button
+            disabled={loading}
+            className={`w-full py-3 rounded-lg font-bold transition mt-2 ${
+              loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#1C2541] text-[#FAF6EE] hover:bg-[#2a3a63]'
+            }`}
+          >
+            {loading ? 'Submitting...' : 'Complete Registration'}
           </button>
         </form>
       </div>

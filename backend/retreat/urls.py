@@ -6,7 +6,7 @@ from rest_framework_nested import routers as nested_routers
 from .views import (
     ParticipantViewSet, ProgramViewSet, RetreatDayViewSet,
     DaySessionViewSet, RegistrationViewSet,
-    check_in_by_code, login_view, signup_view,
+    check_in_by_code, login_view, signup_view, today_sessions  
 )
 
 # Top-level router
@@ -27,6 +27,7 @@ urlpatterns = [
     path('', include(router.urls)),
     path('', include(programs_router.urls)),
     path('', include(days_router.urls)),
+    path('sessions/today/',      today_sessions,              name='today-sessions'), 
     path('checkin/<str:code>/',  check_in_by_code,           name='checkin'),
     path('auth/login/',          login_view,                  name='login'),
     path('auth/signup/',         signup_view,                 name='signup'),

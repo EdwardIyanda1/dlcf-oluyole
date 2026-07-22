@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 const DEBUG = false;
-const BASE_URL = 'http://10.90.250.82:8000/api';
+const BASE_URL = 'http://127.0.0.1:8000/api';
 
 // ── Token helpers ─────────────────────────────────────────────────────────────
 const TOKEN_KEY = 'dlcf_token';
@@ -86,7 +86,7 @@ const apiService = {
   // --- Participants ---
   getParticipants: () => api.get('/participants/'),
   postParticipant: (data) => api.post('/participants/', sanitize(data)),
-
+  getTodaySessions: () => api.get('/sessions/today/'),
   // --- Programs & Reports ---
   getPrograms: () => api.get('/programs/'),
   getProgram: (id) => api.get(`/programs/${id}/`),

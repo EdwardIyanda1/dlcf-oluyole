@@ -10,8 +10,8 @@ export default function LandingPage() {
   useEffect(() => {
     const fetchProgram = async () => {
       try {
-        const res = await apiService.getSessions();
-        
+        // const res = await apiService.getSessions();
+        const res = await apiService.getTodaySessions();
         // Robust data extraction: 
         // 1. If res.data is an array, use it.
         // 2. If res.data has a 'results' key (DRF pagination), use it.

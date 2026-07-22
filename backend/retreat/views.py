@@ -1,5 +1,6 @@
 import re
 import datetime
+from django.utils import timezone
 
 from rest_framework import viewsets, status
 from rest_framework.decorators import api_view, permission_classes, action
@@ -199,3 +200,24 @@ def login_view(request):
     if not s.is_valid():
         return Response(s.errors, status=400)
     return Response(s.validated_data, status=200)
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def today_sessions(request):
+    today = timezone.localdate()
+
+    program = (
+        Program.objects
+        .filter(start_date__lte=today, end_date__gte=today)
+        .order_by('-start_date')
+        .first()
+    )
+    if not program:
+        return Response([])
+
+    day = RetreatDay.objects.filter(program=program, date=today).first()  # confirm field name below
+    if not day:
+        return Response([])
+
+    sessions = DaySession.objects.filter(retreat_day=day).order_by('start_time')
+    return Response(DaySessionSerializer(sessions, many=True).data)

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import apiService from '../api';
-import * as XLSX from 'xlsx';
+import apiService, { downloadBlob } from '../api';
 import Logo from '../components/Logo';
+import ExportButtons from '../components/ExportButtons';
 
 export default function AdminDashboard() {
   const [participants, setParticipants] = useState([]);
@@ -9,20 +9,13 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     apiService.getParticipants().then(res => {
-      setParticipants(res.data);
+      setParticipants(res.data.results ?? res.data);
       setLoading(false);
     });
   }, []);
 
   const getStats = (category, sex) =>
     participants.filter(p => p.category === category && p.sex === sex).length;
-
-  const handleExport = () => {
-    const ws = XLSX.utils.json_to_sheet(participants);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Attendance");
-    XLSX.writeFile(wb, "Retreat_Attendance.xlsx");
-  };
 
   return (
     <div className="min-h-screen bg-[#FAF6EE]">
@@ -41,12 +34,12 @@ export default function AdminDashboard() {
               Retreat Attendance
             </h2>
           </div>
-          <button
-            onClick={handleExport}
-            className="bg-[#1C2541] text-[#FAF6EE] px-6 py-3 rounded-lg font-semibold hover:bg-[#2a3a63] transition"
-          >
-            Export Report
-          </button>
+          <ExportButtons
+            onExcel={() => apiService.exportParticipantsExcel()}
+            onPdf={() => apiService.exportParticipantsPdf()}
+            excelName="Retreat_Attendance.xlsx"
+            pdfName="Retreat_Attendance.pdf"
+          />
         </div>
 
         {/* Stats matrix */}

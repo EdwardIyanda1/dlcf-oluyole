@@ -24,7 +24,6 @@ class Program(models.Model):
 
     @property
     def is_active(self):
-        """A program is active from start_date until 2 days after end_date."""
         today = datetime.date.today()
         return self.start_date <= today <= (self.end_date + datetime.timedelta(days=2))
 
@@ -34,7 +33,7 @@ class Program(models.Model):
         grace_end = self.end_date + datetime.timedelta(days=2)
         if today < self.start_date:    return 'upcoming'
         if today <= self.end_date:     return 'ongoing'
-        if today <= grace_end:         return 'grace'   # completed but code still active
+        if today <= grace_end:         return 'grace'
         return 'closed'
 
     def __str__(self):
@@ -42,11 +41,10 @@ class Program(models.Model):
 
 
 class RetreatDay(models.Model):
-    """One calendar day within a Program (Day 1, Day 2 …)."""
     program    = models.ForeignKey(Program, on_delete=models.CASCADE, related_name='days')
     date       = models.DateField()
-    day_number = models.PositiveSmallIntegerField()   # 1, 2, 3 …
-    label      = models.CharField(max_length=100, blank=True)   # e.g. "Day 1 – Arrival"
+    day_number = models.PositiveSmallIntegerField()
+    label      = models.CharField(max_length=100, blank=True)
 
     class Meta:
         ordering = ['day_number']
@@ -57,7 +55,6 @@ class RetreatDay(models.Model):
 
 
 class DaySession(models.Model):
-    """A single message / programme item within one RetreatDay."""
     retreat_day = models.ForeignKey(RetreatDay, on_delete=models.CASCADE, related_name='sessions')
     title       = models.CharField(max_length=200)
     speaker     = models.CharField(max_length=200, blank=True)
@@ -80,7 +77,7 @@ class Participant(models.Model):
                                         related_name='participant', null=True, blank=True)
     full_name    = models.CharField(max_length=200)
     school       = models.CharField(max_length=200, blank=True)
-    phone_number = models.CharField(max_length=15)
+    phone_number = models.CharField(max_length=15, blank=True)
     address      = models.TextField(blank=True)
     sex          = models.CharField(max_length=1, choices=[('M', 'Male'), ('F', 'Female')])
     category     = models.CharField(max_length=20, choices=CATEGORY_CHOICES)
@@ -98,7 +95,6 @@ class Participant(models.Model):
 
 
 class Registration(models.Model):
-    """Links a Participant to a specific Program (and records the day they registered)."""
     participant      = models.ForeignKey(Participant, on_delete=models.CASCADE,
                                          related_name='registrations')
     program          = models.ForeignKey(Program, on_delete=models.CASCADE,
@@ -112,7 +108,6 @@ class Registration(models.Model):
         unique_together = [['participant', 'program']]
 
     def save(self, *args, **kwargs):
-        # Auto-resolve which RetreatDay today falls on for this program
         if not self.registration_day:
             try:
                 self.registration_day = RetreatDay.objects.get(
@@ -127,7 +122,6 @@ class Registration(models.Model):
 
 
 class Attendance(models.Model):
-    """Whether a participant was present at a specific DaySession."""
     participant = models.ForeignKey(Participant, on_delete=models.CASCADE,
                                     related_name='attendances')
     session     = models.ForeignKey(DaySession, on_delete=models.CASCADE,
@@ -141,3 +135,22 @@ class Attendance(models.Model):
     def __str__(self):
         status = "✓" if self.present else "✗"
         return f"{status} {self.participant} – {self.session.title}"
+
+
+class BulkMessage(models.Model):
+    """Audit log of every bulk SMS/email blast sent from the admin panel."""
+    CHANNEL_CHOICES = [('sms', 'SMS'), ('email', 'Email'), ('both', 'Both')]
+
+    sent_by         = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    channel         = models.CharField(max_length=10, choices=CHANNEL_CHOICES)
+    subject         = models.CharField(max_length=200, blank=True)
+    body            = models.TextField()
+    recipient_count = models.PositiveIntegerField(default=0)
+    filter_desc     = models.CharField(max_length=255, blank=True)
+    created_at      = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.get_channel_display()} to {self.recipient_count} on {self.created_at:%Y-%m-%d %H:%M}"

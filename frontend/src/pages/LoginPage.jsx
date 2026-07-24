@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import apiService, { auth } from '../api';
 import Logo from '../components/Logo';
+import GoogleSignInButton from '../components/GoogleSignInButton';
 
 const inputClass =
   'w-full border border-[#1C2541]/15 bg-[#FAF6EE] focus:bg-white p-3 rounded-lg mb-4 outline-none focus:ring-2 focus:ring-[#D4A857] transition';
@@ -17,7 +18,6 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      // apiService.login() calls auth.setToken() and auth.setUser() internally
       await apiService.login({ email: form.email, password: form.password });
       toast.success("Login successful!");
       navigate('/checkin');
@@ -48,6 +48,16 @@ export default function LoginPage() {
         </div>
 
         <div className="bg-white p-8 rounded-2xl shadow-sm border border-[#1C2541]/10">
+          <div className="mb-6">
+            <GoogleSignInButton />
+          </div>
+
+          <div className="flex items-center gap-3 mb-6">
+            <div className="flex-1 h-px bg-[#1C2541]/10" />
+            <span className="text-xs text-[#6B7785] uppercase tracking-widest">or</span>
+            <div className="flex-1 h-px bg-[#1C2541]/10" />
+          </div>
+
           <form onSubmit={handleSubmit}>
             <label className="block text-xs font-semibold text-[#6B7785] uppercase tracking-wider mb-1">
               Email
@@ -73,8 +83,8 @@ export default function LoginPage() {
               required
             />
 
-            <button 
-              disabled={loading} 
+            <button
+              disabled={loading}
               className={`w-full py-3 rounded-lg font-bold transition ${
                 loading ? 'bg-gray-400' : 'bg-[#1C2541] text-[#FAF6EE] hover:bg-[#2a3a63]'
               }`}

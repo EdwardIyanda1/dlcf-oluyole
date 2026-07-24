@@ -7,10 +7,11 @@ import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
 import CheckInPage from './pages/CheckInPage';
 import AdminLayout from './components/AdminLayout';
-import AdminDashboard from './pages/AdminDashboard';
+import AdminOverview from './pages/admin/AdminOverview';
 import AdminPrograms from './pages/admin/AdminPrograms';
 import AdminAttendance from './pages/admin/AdminAttendance';
 import AdminParticipants from './pages/admin/AdminParticipants';
+import AdminMessaging from './pages/admin/AdminMessaging';
 import NotFoundPage from './pages/NotFoundPage';
 import AdminReports from './pages/admin/AdminReports';
 
@@ -23,15 +24,18 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
         <Route path="/checkin" element={<CheckInPage />} />
-        
+
         {/* Admin Section */}
         <Route path="/admin" element={<AdminLayout />}>
-          <Route index element={<AdminDashboard />} />
+          <Route index element={<AdminOverview />} />
           <Route path="programs" element={<AdminPrograms />} />
           <Route path="reports" element={<AdminReports />} />
           <Route path="attendance" element={<AdminAttendance />} />
           <Route path="participants" element={<AdminParticipants />} />
+          <Route path="messaging" element={<AdminMessaging />} />
         </Route>
+
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </Router>
   );

@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import apiService, { auth } from '../api';
 import Logo from '../components/Logo';
+import GoogleSignInButton from '../components/GoogleSignInButton';
 
 const inputClass =
   'w-full border border-[#1C2541]/15 bg-[#FAF6EE] focus:bg-white p-3 rounded-lg mb-4 outline-none focus:ring-2 focus:ring-[#D4A857] transition';
@@ -24,7 +25,6 @@ export default function SignupPage() {
     }
     setLoading(true);
     try {
-      // apiService.signup() calls auth.setToken() and auth.setUser() internally
       await apiService.signup(form);
       toast.success("Account created successfully!");
       navigate('/checkin');
@@ -56,6 +56,23 @@ export default function SignupPage() {
             Fill this in like a normal registration &mdash; we'll also set up
             your login so future check-ins are instant.
           </p>
+        </div>
+
+        <div className="bg-white p-8 rounded-2xl shadow-sm border border-[#1C2541]/10 mb-6">
+          <p className="text-xs font-semibold text-[#6B7785] uppercase tracking-wider mb-4 text-center">
+            Fastest way in
+          </p>
+          <GoogleSignInButton />
+          <p className="text-xs text-[#6B7785] text-center mt-3">
+            Creates your account instantly &mdash; you can fill in school, phone,
+            and category the first time you check in.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-3 mb-6">
+          <div className="flex-1 h-px bg-[#1C2541]/10" />
+          <span className="text-xs text-[#6B7785] uppercase tracking-widest">or sign up manually</span>
+          <div className="flex-1 h-px bg-[#1C2541]/10" />
         </div>
 
         <form
@@ -136,7 +153,6 @@ export default function SignupPage() {
             ))}
           </select>
 
-          {/* Account credentials */}
           <div className="border-t border-[#1C2541]/10 mt-2 pt-6 mb-2">
             <p className="text-xs font-semibold text-[#6E2C3A] uppercase tracking-wider mb-4">
               Account Details

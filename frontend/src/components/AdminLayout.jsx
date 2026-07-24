@@ -8,6 +8,7 @@ const NAV = [
   { path: '/admin/attendance',   label: 'Attendance',    icon: '◎' },
   { path: '/admin/reports',      label: 'Reports',       icon: '◐' },
   { path: '/admin/participants', label: 'All Registered',icon: '◍' },
+  { path: '/admin/messaging',    label: 'Messaging',     icon: '✉' },
 ];
 
 export default function AdminLayout() {

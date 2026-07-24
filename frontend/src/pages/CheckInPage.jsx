@@ -4,6 +4,7 @@ import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
 import apiService, { auth } from '../api';
 import Logo from '../components/Logo';
+import QRCodeCard from '../components/QRCodeCard';
 
 export default function CheckInPage() {
   const [code, setCode]       = useState('');
@@ -14,22 +15,15 @@ export default function CheckInPage() {
   const scannerRef            = useRef(null);
   const navigate              = useNavigate();
 
-  // ── Auth gate ───────────────────────────────────────────────────────────────
-  // The page is public: anyone can reach it.
-  // If the visitor has a valid token we greet them by name.
-  // If they don't, we show the check-in form anyway but offer a login/register link.
   useEffect(() => {
     const loggedIn = auth.isLoggedIn();
     if (loggedIn) {
       setUser(auth.getUser());
     }
-    // No redirect — CheckInPage is intentionally open to all
   }, []);
 
-  // ── Look up a code ──────────────────────────────────────────────────────────
   const lookup = async (value) => {
     setError('');
-    // If a full QR URL was scanned, pull just the code param
     const cleanCode = value.includes('?') ? value.split('=').pop() : value;
 
     try {
@@ -47,7 +41,6 @@ export default function CheckInPage() {
     if (code.trim()) lookup(code.trim());
   };
 
-  // ── QR scanner lifecycle ────────────────────────────────────────────────────
   useEffect(() => {
     if (!scanning) return;
 
@@ -62,7 +55,7 @@ export default function CheckInPage() {
           .then(() => { setScanning(false); lookup(decodedText); })
           .catch((err) => console.error('QR stop error:', err));
       },
-      () => {} // per-frame errors are normal; suppress
+      () => {}
     ).catch(() => {
       setError('Could not access camera. Please allow camera access and try again.');
       toast.error('Camera access denied.');
@@ -75,17 +68,14 @@ export default function CheckInPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scanning]);
 
-  // ── Redirect unauthenticated users who click "Register" ─────────────────────
   const handleRegisterRedirect = () => navigate('/register');
 
-  // ── UI ──────────────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-[#FAF6EE] py-12 px-6">
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap');`}</style>
 
       <div className="max-w-md mx-auto">
 
-        {/* Header */}
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
             <Logo size={56} withText={false} />
@@ -99,14 +89,7 @@ export default function CheckInPage() {
           >
             {user ? `Welcome, ${user.full_name?.split(' ')[0]}` : 'Check In'}
           </h1>
-          {user?.code && (
-            <p className="text-[#6B7785] mt-1">
-              Your code:{' '}
-              <span className="font-mono font-bold text-[#1C2541]">{user.code}</span>
-            </p>
-          )}
 
-          {/* Shown to guests — unobtrusive link to register/login */}
           {!user && (
             <p className="text-sm text-[#6B7785] mt-3">
               Not registered yet?{' '}
@@ -120,11 +103,16 @@ export default function CheckInPage() {
           )}
         </div>
 
-        {/* Check-in form */}
+        {/* Your own QR code — scan this at any check-in point */}
+        {user?.code && (
+          <div className="flex justify-center mb-8">
+            <QRCodeCard value={user.code} label={user.code} caption="Your check-in code" size={160} />
+          </div>
+        )}
+
         {!result && (
           <div className="bg-white p-8 rounded-2xl shadow-sm border border-[#1C2541]/10">
 
-            {/* QR scanner */}
             <div className="mb-6">
               {scanning ? (
                 <>
@@ -146,14 +134,12 @@ export default function CheckInPage() {
               )}
             </div>
 
-            {/* Divider */}
             <div className="flex items-center gap-3 mb-6">
               <div className="flex-1 h-px bg-[#1C2541]/10" />
               <span className="text-xs text-[#6B7785] uppercase tracking-widest">or</span>
               <div className="flex-1 h-px bg-[#1C2541]/10" />
             </div>
 
-            {/* Manual code entry */}
             <form onSubmit={handleCodeSubmit}>
               <label className="block text-xs font-semibold text-[#6B7785] uppercase tracking-wider mb-1">
                 Enter your code
@@ -182,7 +168,6 @@ export default function CheckInPage() {
           </div>
         )}
 
-        {/* Success card */}
         {result && (
           <div className="bg-white p-8 rounded-2xl shadow-sm border border-[#1C2541]/10 text-center">
             <div className="w-14 h-14 rounded-full bg-[#D4A857]/15 flex items-center justify-center mx-auto mb-4">

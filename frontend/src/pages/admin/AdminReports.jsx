@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import apiService from '../../api';
+import apiService, { isCanceled } from '../../api';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import * as XLSX from 'xlsx';
@@ -184,14 +184,34 @@ export default function AdminReports() {
   const [loading,   setLoading]   = useState(true);
   const [repLoading,setRepLoading]= useState(false);
 
-  useEffect(() => {
-    apiService.getPrograms().then(r=>{ setPrograms(r.data); if(r.data.length) setProgramId(r.data[0].id); setLoading(false); });
-  }, []);
+useEffect(() => {
+  const controller = new AbortController();
+  
+  apiService.getPrograms({ signal: controller.signal })
+    .then(r => {
+      const data = r.data.results ?? r.data;
+      setPrograms(data);
+      if (data.length) setProgramId(data[0].id);
+      setLoading(false);
+    })
+    .catch(err => {
+      if (!isCanceled(err)) {
+        console.error(err);
+        setLoading(false);
+      }
+    });
+    
+  return () => controller.abort();
+}, []);
 
   useEffect(() => {
     if (!programId) return;
     setReport(null); setRepLoading(true);
-    apiService.getProgramReport(programId).then(r=>{ setReport(r.data); setRepLoading(false); });
+    const controller = new AbortController();
+    apiService.getProgramReport(programId, { signal: controller.signal })
+      .then(r => { setReport(r.data); setRepLoading(false); })
+      .catch(err => { if (!isCanceled(err)) { console.error(err); setRepLoading(false); } });
+    return () => controller.abort();
   }, [programId]);
 
   if (loading) return <p className="text-[#6B7785]">Loading…</p>;

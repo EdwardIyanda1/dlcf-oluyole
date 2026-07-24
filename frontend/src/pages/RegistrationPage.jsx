@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import apiService from '../api';
 import Logo from '../components/Logo';
+import QRCodeCard from '../components/QRCodeCard';
 
 const inputClass =
   'w-full border border-[#1C2541]/15 bg-[#FAF6EE] focus:bg-white p-3 rounded-lg mb-4 outline-none focus:ring-2 focus:ring-[#D4A857] transition';
@@ -13,19 +14,20 @@ const EMPTY_FORM = (retreatCode = '') => ({
 });
 
 export default function RegistrationPage() {
-  // Read ?retreat_code=DLCF-XXX from the QR scan URL — falls back to ''
   const [searchParams] = useSearchParams();
   const retreatCode = searchParams.get('retreat_code') || '';
 
   const [formData, setFormData] = useState(EMPTY_FORM(retreatCode));
   const [submitted, setSubmitted] = useState(false);
+  const [submittedCode, setSubmittedCode] = useState(''); // participant.code returned by the API
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     try {
-      await apiService.postParticipant(formData);
+      const res = await apiService.postParticipant(formData);
+      setSubmittedCode(res.data?.code || '');
       toast.success("Registration successful! We can't wait to see you.");
       setSubmitted(true);
     } catch (err) {
@@ -40,7 +42,8 @@ export default function RegistrationPage() {
 
   const handleReset = () => {
     setSubmitted(false);
-    setFormData(EMPTY_FORM(retreatCode)); // preserve retreat_code on reset
+    setSubmittedCode('');
+    setFormData(EMPTY_FORM(retreatCode));
   };
 
   if (submitted) {
@@ -61,6 +64,17 @@ export default function RegistrationPage() {
             Your spot for the retreat is confirmed. We can't wait to worship and
             grow with you.
           </p>
+
+          {submittedCode && (
+            <div className="flex justify-center mb-8">
+              <QRCodeCard
+                value={submittedCode}
+                label={submittedCode}
+                caption="Save this — show it at check-in"
+              />
+            </div>
+          )}
+
           <button onClick={handleReset} className="text-[#6E2C3A] font-semibold underline">
             Register another participant
           </button>

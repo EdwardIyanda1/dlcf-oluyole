@@ -106,11 +106,11 @@ export default function CheckInPage() {
         </div>
 
         {/* Your own QR code: scan this at any check-in point */}
-        {user?.code && (
+        {/* {user?.code && (
           <div className="flex justify-center mb-8">
             <QRCodeCard value={user.code} label={user.code} caption="Your check-in code" size={160} />
           </div>
-        )}
+        )} */}
 
         {!result && (
           <div className="bg-white p-8 rounded-2xl shadow-sm border border-[#1C2541]/10">

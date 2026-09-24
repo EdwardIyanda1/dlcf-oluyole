@@ -36,7 +36,67 @@ class ParticipantViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         if self.action == 'create':
             return [AllowAny()]
+        # Allow standard authenticated users to view/edit their own profile
+        if self.action in ('me', 'my_attendance'):
+            return [IsAuthenticated()]
         return [IsAuthenticated(), IsAdminUser()]
+
+    @action(detail=False, methods=['get', 'patch'], url_path='me')
+    def me(self, request):
+        if not hasattr(request.user, 'participant'):
+            return Response({'error': 'No participant record found.'}, status=404)
+            
+        if request.method == 'PATCH':
+            data = request.data.copy()
+            # Protect sensitive fields from being edited by the user
+            for field in ['code', 'user', 'sex', 'category']:
+                data.pop(field, None)
+                
+            serializer = self.get_serializer(request.user.participant, data=data, partial=True)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(serializer.data)
+            
+        return Response(self.get_serializer(request.user.participant).data)
+
+    @action(detail=False, methods=['get'], url_path='my-attendance')
+    def my_attendance(self, request):
+        if not hasattr(request.user, 'participant'):
+            return Response({'error': 'No participant record found.'}, status=404)
+            
+        participant = request.user.participant
+        sessions_qs = DaySession.objects.filter(
+            retreat_day__program_id__in=participant.registrations.values('program_id')
+        ).select_related('retreat_day')
+        
+        present_ids = set(Attendance.objects.filter(
+            participant=participant, present=True
+        ).values_list('session_id', flat=True))
+        
+        total = sessions_qs.count()
+        present = len(present_ids)
+        rate = round((present / total) * 100, 1) if total else 0.0
+        
+        by_day = {}
+        for s in sessions_qs.order_by('retreat_day__day_number', 'start_time'):
+            day = s.retreat_day
+            entry = by_day.setdefault(day.id, {
+                'day_number': day.day_number,
+                'date': str(day.date),
+                'label': day.label,
+                'present': 0,
+                'total': 0,
+            })
+            entry['total'] += 1
+            if s.id in present_ids:
+                entry['present'] += 1
+                
+        return Response({
+            'sessions_attended': present,
+            'sessions_total': total,
+            'attendance_rate': rate,
+            'by_day': list(by_day.values()),
+        })
 
     def get_queryset(self):
         qs = super().get_queryset()

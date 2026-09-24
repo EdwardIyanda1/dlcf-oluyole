@@ -150,7 +150,10 @@ const apiService = {
     const safeCode = code.replace(/[^a-zA-Z0-9-]/g, '');
     return api.get(`/checkin/${safeCode}/`);
   },
-
+  getMyProfile: () => api.get('/participants/me/'),
+  updateMyProfile: (data) => api.patch('/participants/me/', sanitize(data)),
+  getMyAttendance: () => api.get('/participants/my-attendance/'),
+  
   // --- Bulk messaging (SMS + email) ---
   // payload: { channel: 'sms'|'email'|'both', subject, body, category?, program?, search?, participant_ids? }
   // api.js

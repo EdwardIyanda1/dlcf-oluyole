@@ -12,7 +12,12 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 from datetime import timedelta
 from pathlib import Path
 import os
+from dotenv import load_dotenv
 
+EMAIL_TIMEOUT = 10
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+load_dotenv(BASE_DIR / ".env")
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -46,8 +51,8 @@ INSTALLED_APPS = [
 ]
 
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5174",
-    "http://127.0.0.1:5174",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
     "http://10.90.250.82:5174",
 ]
 
@@ -155,7 +160,8 @@ TERMII_SENDER_ID = os.environ.get("TERMII_SENDER_ID", "DLCF")
 EMAIL_BACKEND       = os.environ.get("EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend")
 EMAIL_HOST          = os.environ.get("EMAIL_HOST", "smtp.gmail.com")
 EMAIL_PORT          = int(os.environ.get("EMAIL_PORT", "587"))
-EMAIL_USE_TLS       = os.environ.get("EMAIL_USE_TLS", "true").lower() == "true"
+EMAIL_USE_SSL = True
+EMAIL_USE_TLS       = os.environ.get("EMAIL_USE_TLS", "false").lower() == "false"
 EMAIL_HOST_USER     = os.environ.get("EMAIL_HOST_USER", "")
 EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
 DEFAULT_FROM_EMAIL  = os.environ.get("DEFAULT_FROM_EMAIL", EMAIL_HOST_USER or "no-reply@dlcf-retreat.org")

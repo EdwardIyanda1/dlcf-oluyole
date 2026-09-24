@@ -153,7 +153,8 @@ const apiService = {
 
   // --- Bulk messaging (SMS + email) ---
   // payload: { channel: 'sms'|'email'|'both', subject, body, category?, program?, search?, participant_ids? }
-  sendBulkMessage: (payload) => api.post('/messages/send/', sanitize(payload)),
+  // api.js
+  sendBulkMessage: (payload) => api.post('/messages/send/', sanitize(payload), { timeout: 60000 }),
 
   // --- Exports (Excel / PDF) — all return a blob; use downloadBlob() with the result ---
   exportParticipantsExcel: (params = {}) =>

@@ -13,7 +13,7 @@ it's the only place that knows about the SMS provider.
 import logging
 import requests
 from django.conf import settings
-from django.core.mail import EmailMultiAlternatives
+from django.core.mail import EmailMultiAlternatives, get_connection
 
 logger = logging.getLogger(__name__)
 
@@ -54,24 +54,28 @@ def send_sms(numbers, message):
 
 
 def send_bulk_email(recipients, subject, message, html_message=None):
-    """recipients: list of email strings, or (email, name) tuples.
-
-    Sends one message per recipient (not one email with everyone in BCC) so
-    each person only sees their own address. Returns count actually sent.
-    """
     sent = 0
     from_email = getattr(settings, "DEFAULT_FROM_EMAIL", "no-reply@dlcf-retreat.org")
+    connection = get_connection()  # opens once, reused for every send below
+
+    try:
+        connection.open()
+    except Exception:
+        logger.exception("Could not open SMTP connection — aborting bulk send.")
+        return 0  # fail fast instead of timing out once per recipient
 
     for r in recipients:
         email = r[0] if isinstance(r, (list, tuple)) else r
         if not email:
             continue
         try:
-            msg = EmailMultiAlternatives(subject, message, from_email, [email])
+            msg = EmailMultiAlternatives(subject, message, from_email, [email], connection=connection)
             if html_message:
                 msg.attach_alternative(html_message, "text/html")
             msg.send(fail_silently=False)
             sent += 1
         except Exception:
             logger.exception("Email send failed for %s", email)
+
+    connection.close()
     return sent

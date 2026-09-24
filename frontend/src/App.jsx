@@ -17,6 +17,7 @@ import AdminReports from './pages/admin/AdminReports';
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
 import TermsPage from './pages/TermsPage';
 import Footer from './components/Footer';
+import ProfilePage from './pages/ProfilePage';
 
 function App() {
   return (
@@ -29,6 +30,7 @@ function App() {
         <Route path="/checkin" element={<CheckInPage />} />
         <Route path="/privacy" element={<PrivacyPolicyPage />} />
         <Route path="/terms" element={<TermsPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
 
         {/* Admin Section */}
         <Route path="/admin" element={<AdminLayout />}>

@@ -4,10 +4,14 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Logo from './Logo';
 import MenuIcon from './MenuIcon';
+import { auth } from '../api';
 
 export default function Header() {
   const { pathname } = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  
+  const loggedIn = auth.isLoggedIn(); // <-- Get auth status
+  const user = auth.getUser();
 
   const link = (to, label) => (
     <Link
@@ -47,6 +51,7 @@ export default function Header() {
           {link('/', 'Home')}
           {link('/register', 'Register')}
           {link('/admin', 'Admin')}
+          {link('/Profile', 'Profile')}
         </nav>
 
         {/* Mobile Toggle */}

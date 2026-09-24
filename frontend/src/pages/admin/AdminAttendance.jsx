@@ -15,11 +15,14 @@ export default function AdminAttendance() {
   const [loading,    setLoading]    = useState(true);
   const [saving,     setSaving]     = useState(false);
 
-  useEffect(() => {
+useEffect(() => {
     const controller = new AbortController();
     apiService.getPrograms({ signal: controller.signal }).then(r => {
-      const active = r.data.filter(p => p.status === 'ongoing' || p.status === 'grace');
-      const list   = active.length ? active : r.data;
+      // Safely extract the array whether pagination is enabled or not
+      const data = r.data.results ?? r.data; 
+      
+      const active = data.filter(p => p.status === 'ongoing' || p.status === 'grace');
+      const list   = active.length ? active : data;
       setPrograms(list);
       if (list.length) setProgramId(list[0].id);
       setLoading(false);
@@ -30,17 +33,24 @@ export default function AdminAttendance() {
     });
     return () => controller.abort();
   }, []);
-
-  useEffect(() => {
+  
+useEffect(() => {
     if (!programId) return;
     setDayId(null); setSessions([]); setSessionId(null); setRecords([]);
+    
     const controller = new AbortController();
     apiService.getDays(programId, { signal: controller.signal }).then(r => {
-      setDays(r.data);
-      const today = new Date().toISOString().slice(0,10);
-      const todayDay = r.data.find(d => d.date === today);
-      setDayId((todayDay || r.data[0])?.id || null);
-    }).catch(err => { if (!isCanceled(err)) console.error(err); });
+      // Safely extract the array
+      const data = r.data.results ?? r.data;
+      
+      setDays(data);
+      const today = new Date().toISOString().slice(0, 10);
+      const todayDay = data.find(d => d.date === today);
+      setDayId((todayDay || data[0])?.id || null);
+    }).catch(err => { 
+      if (!isCanceled(err)) console.error(err); 
+    });
+    
     return () => controller.abort();
   }, [programId]);
 

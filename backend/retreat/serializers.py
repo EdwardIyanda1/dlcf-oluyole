@@ -86,6 +86,7 @@ class AttendanceRosterSerializer(serializers.ModelSerializer):
 class DayReportSerializer(serializers.ModelSerializer):
     sessions      = serializers.SerializerMethodField()
     total_present = serializers.SerializerMethodField()
+    attendance_rate = serializers.SerializerMethodField()
     by_category   = serializers.SerializerMethodField()
     by_sex        = serializers.SerializerMethodField()
     registrations_today = serializers.SerializerMethodField()
@@ -93,7 +94,8 @@ class DayReportSerializer(serializers.ModelSerializer):
     class Meta:
         model  = RetreatDay
         fields = ['id', 'date', 'day_number', 'label',
-                  'registrations_today', 'total_present', 'by_category', 'by_sex', 'sessions']
+                  'registrations_today', 'total_present', 'attendance_rate',
+                  'by_category', 'by_sex', 'sessions']
 
     def get_sessions(self, obj):
         return [
@@ -111,6 +113,13 @@ class DayReportSerializer(serializers.ModelSerializer):
 
     def get_total_present(self, obj):
         return Attendance.objects.filter(session__retreat_day=obj, present=True).values('participant').distinct().count()
+
+    def get_attendance_rate(self, obj):
+        """Percentage of this program's registered participants present on this day."""
+        total_registered = Registration.objects.filter(program=obj.program).count()
+        if not total_registered:
+            return 0.0
+        return round((self.get_total_present(obj) / total_registered) * 100, 1)
 
     def get_by_category(self, obj):
         result = {}

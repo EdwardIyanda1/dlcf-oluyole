@@ -5,7 +5,6 @@ import { QRCodeSVG } from 'qrcode.react';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 
-const FONT = { fontFamily: "'Fraunces', Georgia, serif" };
 const inputCls = 'w-full border border-[#1C2541]/15 bg-[#FAF6EE] focus:bg-white p-3 rounded-lg outline-none focus:ring-2 focus:ring-[#D4A857] transition';
 
 const loadImg = (src) =>
@@ -175,14 +174,14 @@ function ManageSessions({ program, onBack }) {
   return (
     <div>
       <button onClick={onBack} className="text-[#6E2C3A] font-semibold text-sm underline mb-6">← All Programs</button>
-      <div className="flex justify-between items-start mb-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-6">
         <div>
           <p className="text-[#6E2C3A] text-xs font-semibold tracking-[0.25em] uppercase mb-1">Program</p>
-          <h2 className="text-2xl font-bold text-[#1C2541]" style={FONT}>{program.name}</h2>
+          <h2 className="text-2xl font-bold text-[#1C2541]">{program.name}</h2>
           <p className="text-xs text-[#6B7785] mt-0.5">{program.start_date} – {program.end_date} · {program.theme}</p>
         </div>
         <button onClick={() => setShowNewDay(true)}
-          className="bg-[#1C2541] text-[#FAF6EE] px-4 py-2 rounded-lg text-sm font-bold hover:bg-[#2a3a63] transition">
+          className="flex-shrink-0 bg-[#1C2541] text-[#FAF6EE] px-4 py-2 rounded-lg text-sm font-bold hover:bg-[#2a3a63] transition">
           + Add Day
         </button>
       </div>
@@ -190,7 +189,7 @@ function ManageSessions({ program, onBack }) {
       {showNewDay && (
         <div className="bg-white p-5 rounded-2xl border border-[#1C2541]/10 shadow-sm mb-6">
           <h4 className="font-bold text-[#1C2541] mb-4">Add Retreat Day</h4>
-          <div className="grid grid-cols-3 gap-3 mb-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
             <div>
               <label className="block text-xs text-[#6B7785] uppercase tracking-wider mb-1">Day #</label>
               <input type="number" className={inputCls} placeholder="1" value={newDay.day_number}
@@ -218,10 +217,10 @@ function ManageSessions({ program, onBack }) {
         <p className="text-[#6B7785]">No days added yet.</p>
       ) : (
         <div className="grid md:grid-cols-4 gap-6">
-          <div className="md:col-span-1 flex md:flex-col gap-2">
+          <div className="md:col-span-1 flex md:flex-col gap-2 overflow-x-auto pb-1 md:pb-0 md:overflow-visible">
             {days.map(d => (
               <button key={d.id} onClick={() => setSelDay(d)}
-                className={`text-left px-4 py-3 rounded-xl text-sm font-semibold transition border ${
+                className={`flex-shrink-0 text-left px-4 py-3 rounded-xl text-sm font-semibold transition border ${
                   selDay?.id === d.id
                     ? 'bg-[#1C2541] text-[#FAF6EE] border-[#1C2541]'
                     : 'bg-white text-[#1C2541] border-[#1C2541]/10 hover:bg-[#FAF6EE]'
@@ -234,12 +233,12 @@ function ManageSessions({ program, onBack }) {
           </div>
 
           <div className="md:col-span-3">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="font-bold text-[#1C2541]" style={FONT}>
+            <div className="flex flex-wrap justify-between items-center gap-3 mb-4">
+              <h3 className="font-bold text-[#1C2541]">
                 Day {selDay?.day_number} – {selDay?.label || selDay?.date}
               </h3>
               <button onClick={() => setShowNewSes(true)}
-                className="bg-[#D4A857] text-[#1C2541] px-4 py-1.5 rounded-full text-sm font-bold hover:bg-[#e6bd72] transition">
+                className="bg-[#D4A857] text-[#1C2541] px-4 py-1.5 rounded-lg text-sm font-bold hover:bg-[#e6bd72] transition">
                 + Add Session
               </button>
             </div>
@@ -351,14 +350,13 @@ export default function AdminPrograms() {
 
   return (
     <div>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap');`}</style>
-      <div className="flex justify-between items-start mb-8">
+      <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-8">
         <div>
           <p className="text-[#6E2C3A] text-xs font-semibold tracking-[0.25em] uppercase mb-1">Management</p>
-          <h2 className="text-3xl font-bold text-[#1C2541]" style={FONT}>Retreat Programs</h2>
+          <h2 className="text-3xl font-bold text-[#1C2541]">Retreat Programs</h2>
         </div>
         <button onClick={() => setShowAdd(true)}
-          className="bg-[#1C2541] text-[#FAF6EE] px-5 py-2.5 rounded-lg font-semibold text-sm hover:bg-[#2a3a63] transition">
+          className="flex-shrink-0 bg-[#1C2541] text-[#FAF6EE] px-5 py-2.5 rounded-lg font-semibold text-sm hover:bg-[#2a3a63] transition">
           + New Program
         </button>
       </div>
@@ -401,7 +399,7 @@ export default function AdminPrograms() {
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
               <div className="flex-1 min-w-0">
                 <div className="flex flex-wrap items-center gap-2 mb-1">
-                  <h3 className="font-bold text-[#1C2541] text-lg" style={FONT}>{r.name}</h3>
+                  <h3 className="font-bold text-[#1C2541] text-lg">{r.name}</h3>
                   <span className="text-xs bg-[#D4A857]/20 text-[#6E2C3A] px-2 py-0.5 rounded font-mono">{r.code}</span>
                   {statusBadge(r.status)}
                 </div>

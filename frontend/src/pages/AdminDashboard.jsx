@@ -19,7 +19,6 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-[#FAF6EE]">
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap');`}</style>
 
       <div className="max-w-6xl mx-auto p-8">
         <div className="flex justify-between items-center mb-10">
@@ -29,7 +28,6 @@ export default function AdminDashboard() {
             </p>
             <h2
               className="text-3xl font-bold text-[#1C2541]"
-              style={{ fontFamily: "'Fraunces', Georgia, serif" }}
             >
               Retreat Attendance
             </h2>
@@ -48,7 +46,6 @@ export default function AdminDashboard() {
             <div key={cat} className="bg-white p-5 rounded-2xl border border-[#1C2541]/10">
               <h4
                 className="font-bold text-[#1C2541] mb-3"
-                style={{ fontFamily: "'Fraunces', Georgia, serif" }}
               >
                 {cat}
               </h4>
@@ -96,7 +93,7 @@ export default function AdminDashboard() {
                 participants.map(p => (
                   <tr key={p.id} className="border-b border-[#1C2541]/5 last:border-0 hover:bg-[#FAF6EE]">
                     <td className="p-4 font-medium text-[#1C2541]">{p.full_name}</td>
-                    <td className="p-4 text-[#6B7785]">{p.school || '—'}</td>
+                    <td className="p-4 text-[#6B7785]">{p.school || 'N/A'}</td>
                     <td className="p-4">
                       <span className="text-xs font-semibold uppercase tracking-wide bg-[#D4A857]/15 text-[#6E2C3A] px-2 py-1 rounded-full">
                         {p.category}

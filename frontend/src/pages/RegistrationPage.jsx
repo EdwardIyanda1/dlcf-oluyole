@@ -4,6 +4,7 @@ import { toast } from 'react-toastify';
 import apiService from '../api';
 import Logo from '../components/Logo';
 import QRCodeCard from '../components/QRCodeCard';
+import SEO from '../components/SEO';
 
 const inputClass =
   'w-full border border-[#1C2541]/15 bg-[#FAF6EE] focus:bg-white p-3 rounded-lg mb-4 outline-none focus:ring-2 focus:ring-[#D4A857] transition';
@@ -49,14 +50,13 @@ export default function RegistrationPage() {
   if (submitted) {
     return (
       <div className="min-h-screen bg-[#FAF6EE] flex items-center justify-center p-6">
-        <style>{`@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap');`}</style>
+        <SEO title="Registration Complete" noindex />
         <div className="text-center max-w-md">
           <div className="flex justify-center mb-6">
             <Logo size={64} withText={false} />
           </div>
           <h2
             className="text-3xl font-bold text-[#1C2541] mb-3"
-            style={{ fontFamily: "'Fraunces', Georgia, serif" }}
           >
             You're In, {formData.full_name.split(' ')[0] || 'Friend'}!
           </h2>
@@ -70,7 +70,7 @@ export default function RegistrationPage() {
               <QRCodeCard
                 value={submittedCode}
                 label={submittedCode}
-                caption="Save this — show it at check-in"
+                caption="Save this. Show it at check-in"
               />
             </div>
           )}
@@ -85,7 +85,6 @@ export default function RegistrationPage() {
 
   return (
     <div className="min-h-screen bg-[#FAF6EE] py-12 px-6">
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap');`}</style>
       <div className="max-w-xl mx-auto">
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
@@ -96,7 +95,6 @@ export default function RegistrationPage() {
           </p>
           <h1
             className="text-3xl font-bold text-[#1C2541]"
-            style={{ fontFamily: "'Fraunces', Georgia, serif" }}
           >
             Reserve Your Place
           </h1>

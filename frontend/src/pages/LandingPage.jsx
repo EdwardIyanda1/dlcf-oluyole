@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import apiService from '../api';
 import Logo from '../components/Logo';
+import SEO from '../components/SEO';
 
 export default function LandingPage() {
   const [sessions, setSessions] = useState([]);
@@ -28,7 +29,10 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-[#FAF6EE]">
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap');`}</style>
+      <SEO
+        title="Home"
+        description="Register, check in, and track attendance for Deeper Life Campus Fellowship Oluyole Region retreats."
+      />
 
       {/* Hero */}
       <section className="relative overflow-hidden bg-[#1C2541]">
@@ -57,7 +61,6 @@ export default function LandingPage() {
           </p>
           <h1
             className="text-5xl md:text-6xl font-bold text-[#FAF6EE] mb-6 leading-tight"
-            style={{ fontFamily: "'Fraunces', Georgia, serif" }}
           >
             Gather. Worship. <br className="hidden md:block" /> Be Renewed.
           </h1>
@@ -70,7 +73,7 @@ export default function LandingPage() {
           {user ? (
             <Link
               to="/checkin"
-              className="bg-[#D4A857] text-[#1C2541] px-8 py-3 rounded-full font-bold hover:bg-[#e6bd72] transition shadow-lg shadow-[#D4A857]/20"
+              className="bg-[#D4A857] text-[#1C2541] px-8 py-3 rounded-lg font-bold hover:bg-[#e6bd72] transition shadow-lg shadow-[#D4A857]/20"
             >
               Go to Check-In
             </Link>
@@ -78,25 +81,25 @@ export default function LandingPage() {
             <div className="flex flex-wrap justify-center gap-4">
               <Link
                 to="/signup"
-                className="bg-[#D4A857] text-[#1C2541] px-8 py-3 rounded-full font-bold hover:bg-[#e6bd72] transition shadow-lg shadow-[#D4A857]/20"
+                className="bg-[#D4A857] text-[#1C2541] px-8 py-3 rounded-lg font-bold hover:bg-[#e6bd72] transition shadow-lg shadow-[#D4A857]/20"
               >
                 Sign Up
               </Link>
               <Link
                 to="/login"
-                className="border border-[#FAF6EE]/30 text-[#FAF6EE] px-8 py-3 rounded-full font-semibold hover:bg-[#FAF6EE]/10 transition"
+                className="border border-[#FAF6EE]/30 text-[#FAF6EE] px-8 py-3 rounded-lg font-semibold hover:bg-[#FAF6EE]/10 transition"
               >
                 Log In
               </Link>
               <Link
                 to="/register"
-                className="border border-[#FAF6EE]/30 text-[#FAF6EE] px-8 py-3 rounded-full font-semibold hover:bg-[#FAF6EE]/10 transition"
+                className="border border-[#FAF6EE]/30 text-[#FAF6EE] px-8 py-3 rounded-lg font-semibold hover:bg-[#FAF6EE]/10 transition"
               >
                 Fill Registration Form
               </Link>
               <Link
                 to="/checkin"
-                className="border border-[#FAF6EE]/30 text-[#FAF6EE] px-8 py-3 rounded-full font-semibold hover:bg-[#FAF6EE]/10 transition"
+                className="border border-[#FAF6EE]/30 text-[#FAF6EE] px-8 py-3 rounded-lg font-semibold hover:bg-[#FAF6EE]/10 transition"
               >
                 I Have a Code
               </Link>
@@ -118,7 +121,6 @@ export default function LandingPage() {
         </p>
         <h2
           className="text-3xl font-bold text-[#1C2541] text-center mb-12"
-          style={{ fontFamily: "'Fraunces', Georgia, serif" }}
         >
           Program of the Day
         </h2>
@@ -150,7 +152,6 @@ export default function LandingPage() {
             <div key={c} className="border border-[#1C2541]/10 rounded-2xl py-6">
               <p
                 className="text-xl font-bold text-[#1C2541]"
-                style={{ fontFamily: "'Fraunces', Georgia, serif" }}
               >
                 {c}
               </p>

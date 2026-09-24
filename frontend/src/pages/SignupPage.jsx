@@ -4,6 +4,7 @@ import { toast } from 'react-toastify';
 import apiService, { auth } from '../api';
 import Logo from '../components/Logo';
 import GoogleSignInButton from '../components/GoogleSignInButton';
+import SEO from '../components/SEO';
 
 const inputClass =
   'w-full border border-[#1C2541]/15 bg-[#FAF6EE] focus:bg-white p-3 rounded-lg mb-4 outline-none focus:ring-2 focus:ring-[#D4A857] transition';
@@ -37,7 +38,6 @@ export default function SignupPage() {
 
   return (
     <div className="min-h-screen bg-[#FAF6EE] py-12 px-6">
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap');`}</style>
       <div className="max-w-xl mx-auto">
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
@@ -48,7 +48,6 @@ export default function SignupPage() {
           </p>
           <h1
             className="text-3xl font-bold text-[#1C2541]"
-            style={{ fontFamily: "'Fraunces', Georgia, serif" }}
           >
             Sign Up Once, Check In Forever
           </h1>

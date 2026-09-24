@@ -1,0 +1,10 @@
+django
+dotenv
+djangorestframework==3.18.1
+django-cors-headers
+djangorestframework-simplejwt
+drf-nested-routers
+google-auth
+requests
+openpyxl
+reportlab

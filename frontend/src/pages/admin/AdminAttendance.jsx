@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import apiService, { isCanceled } from '../../api';
 import ExportButtons from '../../components/ExportButtons';
 
-const FONT = { fontFamily: "'Fraunces', Georgia, serif" };
 
 export default function AdminAttendance() {
   const [programs,   setPrograms]   = useState([]);
@@ -50,8 +49,9 @@ export default function AdminAttendance() {
     setSessionId(null); setRecords([]);
     const controller = new AbortController();
     apiService.getSessions(programId, dayId, { signal: controller.signal }).then(r => {
-      setSessions(r.data);
-      if (r.data.length) setSessionId(r.data[0].id);
+      const data = r.data.results ?? r.data;
+      setSessions(data);
+      if (data.length) setSessionId(data[0].id);
     }).catch(err => { if (!isCanceled(err)) console.error(err); });
     return () => controller.abort();
   }, [dayId]);
@@ -60,7 +60,7 @@ export default function AdminAttendance() {
     if (!programId || !dayId || !sessionId) { setRecords([]); return; }
     const controller = new AbortController();
     apiService.getAttendance(programId, dayId, sessionId, { signal: controller.signal })
-      .then(r => setRecords(r.data))
+      .then(r => setRecords(r.data.results ?? r.data))
       .catch(err => { if (!isCanceled(err)) console.error(err); });
     return () => controller.abort();
   }, [sessionId]);
@@ -94,9 +94,8 @@ export default function AdminAttendance() {
 
   return (
     <div>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap');`}</style>
       <p className="text-[#6E2C3A] text-xs font-semibold tracking-[0.25em] uppercase mb-1">Admin Dashboard</p>
-      <h2 className="text-3xl font-bold text-[#1C2541] mb-1" style={FONT}>Attendance</h2>
+      <h2 className="text-3xl font-bold text-[#1C2541] mb-1">Attendance</h2>
       <p className="text-[#6B7785] text-sm mb-8">Select a program → day → session to take attendance.</p>
 
       {programs.length === 0
@@ -108,7 +107,7 @@ export default function AdminAttendance() {
             <div className="flex flex-wrap gap-2">
               {programs.map(p => (
                 <button key={p.id} onClick={() => setProgramId(p.id)}
-                  className={`px-4 py-2 rounded-full text-sm font-semibold border transition ${
+                  className={`px-4 py-2 rounded-lg text-sm font-semibold border transition ${
                     programId===p.id ? 'bg-[#1C2541] text-[#FAF6EE] border-[#1C2541]'
                                      : 'bg-white text-[#1C2541] border-[#1C2541]/15 hover:bg-[#FAF6EE]'}`}>
                   {p.name}
@@ -125,7 +124,7 @@ export default function AdminAttendance() {
               <div className="flex flex-wrap gap-2">
                 {days.map(d => (
                   <button key={d.id} onClick={() => setDayId(d.id)}
-                    className={`px-4 py-2 rounded-full text-sm font-semibold border transition ${
+                    className={`px-4 py-2 rounded-lg text-sm font-semibold border transition ${
                       dayId===d.id ? 'bg-[#1C2541] text-[#FAF6EE] border-[#1C2541]'
                                    : 'bg-white text-[#1C2541] border-[#1C2541]/15 hover:bg-[#FAF6EE]'}`}>
                     Day {d.day_number} <span className="opacity-60 ml-1">{d.date}</span>
@@ -143,7 +142,7 @@ export default function AdminAttendance() {
               <div className="flex flex-wrap gap-2">
                 {sessions.map(s => (
                   <button key={s.id} onClick={() => setSessionId(s.id)}
-                    className={`px-4 py-2 rounded-full text-sm font-semibold border transition ${
+                    className={`px-4 py-2 rounded-lg text-sm font-semibold border transition ${
                       sessionId===s.id ? 'bg-[#D4A857] text-[#1C2541] border-[#D4A857]'
                                        : 'bg-white text-[#1C2541] border-[#1C2541]/15 hover:bg-[#FAF6EE]'}`}>
                     {s.title} <span className="opacity-60 ml-1">{s.start_time}</span>
@@ -157,7 +156,7 @@ export default function AdminAttendance() {
             <>
               <div className="bg-white rounded-2xl border border-[#1C2541]/10 shadow-sm p-5 mb-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
-                  <h3 className="font-bold text-[#1C2541]" style={FONT}>{activeSession?.title}</h3>
+                  <h3 className="font-bold text-[#1C2541]">{activeSession?.title}</h3>
                   <p className="text-sm text-[#6B7785]">
                     {activeProgram?.name} · Day {activeDay?.day_number} ({activeDay?.date})
                     {activeSession?.speaker && ` · ${activeSession.speaker}`}
@@ -170,7 +169,7 @@ export default function AdminAttendance() {
                       {label:'Absent', val:records.length-presentCount,color:'text-[#6E2C3A]'},
                       {label:'Total',  val:records.length,color:'text-[#1C2541]'}].map(s=>(
                       <div key={s.label} className="text-center bg-[#FAF6EE] rounded-xl px-4 py-2">
-                        <p className={`text-2xl font-bold ${s.color}`} style={FONT}>{s.val}</p>
+                        <p className={`text-2xl font-bold ${s.color}`}>{s.val}</p>
                         <p className="text-[10px] uppercase tracking-widest text-[#6B7785]">{s.label}</p>
                       </div>
                     ))}
@@ -198,8 +197,8 @@ export default function AdminAttendance() {
                 </button>
               </div>
 
-              <div className="bg-white rounded-2xl border border-[#1C2541]/10 overflow-hidden shadow-sm">
-                <table className="w-full text-left">
+              <div className="bg-white rounded-2xl border border-[#1C2541]/10 overflow-x-auto shadow-sm">
+                <table className="w-full text-left min-w-[560px]">
                   <thead className="bg-[#1C2541]">
                     <tr>
                       {['Name','Category','Sex','Present'].map(h=>(

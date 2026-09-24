@@ -14,16 +14,21 @@ import AdminParticipants from './pages/admin/AdminParticipants';
 import AdminMessaging from './pages/admin/AdminMessaging';
 import NotFoundPage from './pages/NotFoundPage';
 import AdminReports from './pages/admin/AdminReports';
+import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
+import TermsPage from './pages/TermsPage';
+import Footer from './components/Footer';
 
 function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<><Header /><LandingPage /></>} />
-        <Route path="/register" element={<><Header /><RegistrationPage /></>} />
+        <Route path="/" element={<><Header /><LandingPage /><Footer /></>} />
+        <Route path="/register" element={<><Header /><RegistrationPage /><Footer /></>} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
         <Route path="/checkin" element={<CheckInPage />} />
+        <Route path="/privacy" element={<PrivacyPolicyPage />} />
+        <Route path="/terms" element={<TermsPage />} />
 
         {/* Admin Section */}
         <Route path="/admin" element={<AdminLayout />}>

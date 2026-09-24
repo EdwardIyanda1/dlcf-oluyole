@@ -3,7 +3,6 @@ export default function Logo({ size = 48, withText = true, light = false }) {
   return (
     <div className="flex items-center gap-3">
       <img src="/logo.png" alt="DLCF LCU Logo" width={size} height={size} className="object-contain" />
-      <img src="/logo.png" alt="DLCF LCU Logo" width={size} height={size} className="object-contain" />
       {withText && (
         <div className="leading-tight">
           <p
@@ -14,7 +13,7 @@ export default function Logo({ size = 48, withText = true, light = false }) {
           </p>
           <p
             className="text-lg font-bold tracking-tight"
-            style={{ color: ink, fontFamily: "'Fraunces', Georgia, serif" }}
+            style={{ color: ink }}
           >
             Retreat
           </p>

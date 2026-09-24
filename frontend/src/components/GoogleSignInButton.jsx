@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import apiService from '../api';
 
-// Set VITE_GOOGLE_CLIENT_ID in your frontend .env — same client ID configured
+// Set VITE_GOOGLE_CLIENT_ID in your frontend .env (same client ID configured
 // as GOOGLE_CLIENT_ID on the backend. Works for both participants and admins;
 // which dashboard they land on is decided by the returned user.is_admin.
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;

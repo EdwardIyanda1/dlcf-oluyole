@@ -5,6 +5,8 @@ import { useNavigate } from 'react-router-dom';
 import apiService, { auth } from '../api';
 import Logo from '../components/Logo';
 import QRCodeCard from '../components/QRCodeCard';
+import { IconCheck } from '../components/icons';
+import SEO from '../components/SEO';
 
 export default function CheckInPage() {
   const [code, setCode]       = useState('');
@@ -72,7 +74,10 @@ export default function CheckInPage() {
 
   return (
     <div className="min-h-screen bg-[#FAF6EE] py-12 px-6">
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap');`}</style>
+      <SEO
+        title="Check In"
+        description="Scan your QR code or enter your check-in code to confirm attendance at DLCF Oluyole Region retreat sessions."
+      />
 
       <div className="max-w-md mx-auto">
 
@@ -83,10 +88,7 @@ export default function CheckInPage() {
           <p className="text-[#6E2C3A] text-sm font-semibold tracking-[0.25em] uppercase mb-2">
             Registration Unit
           </p>
-          <h1
-            className="text-3xl font-bold text-[#1C2541]"
-            style={{ fontFamily: "'Fraunces', Georgia, serif" }}
-          >
+          <h1 className="text-3xl font-bold text-[#1C2541]">
             {user ? `Welcome, ${user.full_name?.split(' ')[0]}` : 'Check In'}
           </h1>
 
@@ -103,7 +105,7 @@ export default function CheckInPage() {
           )}
         </div>
 
-        {/* Your own QR code — scan this at any check-in point */}
+        {/* Your own QR code: scan this at any check-in point */}
         {user?.code && (
           <div className="flex justify-center mb-8">
             <QRCodeCard value={user.code} label={user.code} caption="Your check-in code" size={160} />
@@ -171,12 +173,9 @@ export default function CheckInPage() {
         {result && (
           <div className="bg-white p-8 rounded-2xl shadow-sm border border-[#1C2541]/10 text-center">
             <div className="w-14 h-14 rounded-full bg-[#D4A857]/15 flex items-center justify-center mx-auto mb-4">
-              <span className="text-[#6E2C3A] text-2xl">✓</span>
+              <IconCheck className="w-6 h-6 text-[#6E2C3A]" />
             </div>
-            <h2
-              className="text-2xl font-bold text-[#1C2541] mb-1"
-              style={{ fontFamily: "'Fraunces', Georgia, serif" }}
-            >
+            <h2 className="text-2xl font-bold text-[#1C2541] mb-1">
               {result.full_name}
             </h2>
             <p className="text-[#6B7785] mb-4">{result.school}</p>

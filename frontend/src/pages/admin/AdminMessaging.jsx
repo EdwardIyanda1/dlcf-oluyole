@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { toast } from 'react-toastify';
 import apiService from '../../api';
 
-const FONT = { fontFamily: "'Fraunces', Georgia, serif" };
 const CATEGORIES = ['Adult', 'Campus', 'Youth', 'Children'];
 
 export default function AdminMessaging() {
@@ -38,9 +37,8 @@ export default function AdminMessaging() {
 
   return (
     <div>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap');`}</style>
       <p className="text-[#6E2C3A] text-xs font-semibold tracking-[0.25em] uppercase mb-1">Admin Dashboard</p>
-      <h2 className="text-3xl font-bold text-[#1C2541] mb-1" style={FONT}>Bulk Messaging</h2>
+      <h2 className="text-3xl font-bold text-[#1C2541] mb-1">Bulk Messaging</h2>
       <p className="text-[#6B7785] text-sm mb-8">Send SMS or email announcements to participants.</p>
 
       <div className="bg-white rounded-2xl border border-[#1C2541]/10 p-6 max-w-2xl shadow-sm">
@@ -50,7 +48,7 @@ export default function AdminMessaging() {
             <button
               key={val}
               onClick={() => setChannel(val)}
-              className={`px-4 py-2 rounded-full text-sm font-semibold border transition ${
+              className={`px-4 py-2 rounded-lg text-sm font-semibold border transition ${
                 channel === val
                   ? 'bg-[#1C2541] text-[#FAF6EE] border-[#1C2541]'
                   : 'bg-white text-[#1C2541] border-[#1C2541]/15 hover:bg-[#FAF6EE]'
@@ -61,7 +59,7 @@ export default function AdminMessaging() {
           ))}
         </div>
 
-        <div className="grid grid-cols-2 gap-4 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
           <div>
             <label className="block text-xs font-bold text-[#6B7785] uppercase tracking-widest mb-2">Category</label>
             <select

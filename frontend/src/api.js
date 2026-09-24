@@ -96,7 +96,7 @@ const apiService = {
   },
 
   // credential = the JWT handed back by Google Identity Services'
-  // `google.accounts.id` callback (response.credential) — works for both
+  // `google.accounts.id` callback (response.credential) - works for both
   // participants and admins; admin status is decided server-side by is_staff.
   googleLogin: async (credential) => {
     const res = await api.post('/auth/google/', { credential });
@@ -156,7 +156,7 @@ const apiService = {
   // api.js
   sendBulkMessage: (payload) => api.post('/messages/send/', sanitize(payload), { timeout: 60000 }),
 
-  // --- Exports (Excel / PDF) — all return a blob; use downloadBlob() with the result ---
+  // --- Exports (Excel / PDF): all return a blob; use downloadBlob() with the result ---
   exportParticipantsExcel: (params = {}) =>
     api.get('/participants/export/excel/', { params, responseType: 'blob' }),
   exportParticipantsPdf: (params = {}) =>

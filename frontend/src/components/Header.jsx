@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Logo from './Logo';
+import MenuIcon from './MenuIcon';
 
 export default function Header() {
   const { pathname } = useLocation();
@@ -49,11 +50,13 @@ export default function Header() {
         </nav>
 
         {/* Mobile Toggle */}
-        <button 
-          className="md:hidden text-[#FAF6EE] text-2xl"
+        <button
+          className="md:hidden text-[#FAF6EE] p-1"
           onClick={() => setIsMenuOpen(!isMenuOpen)}
+          aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
+          aria-expanded={isMenuOpen}
         >
-          {isMenuOpen ? '✕' : '☰'}
+          <MenuIcon open={isMenuOpen} />
         </button>
       </div>
 

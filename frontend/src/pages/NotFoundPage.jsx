@@ -1,10 +1,11 @@
 import { Link } from 'react-router-dom';
 import Logo from '../components/Logo';
+import SEO from '../components/SEO';
 
 export default function NotFoundPage() {
   return (
     <div className="min-h-screen bg-[#FAF6EE] flex items-center justify-center p-6 text-center">
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap');`}</style>
+      <SEO title="Page Not Found" noindex />
       <div>
         <div className="flex justify-center mb-6">
           <Logo size={64} withText={false} />
@@ -14,7 +15,6 @@ export default function NotFoundPage() {
         </p>
         <h1
           className="text-5xl font-bold text-[#1C2541] mb-4"
-          style={{ fontFamily: "'Fraunces', Georgia, serif" }}
         >
           Page Not Found
         </h1>
@@ -23,7 +23,7 @@ export default function NotFoundPage() {
         </p>
         <Link
           to="/"
-          className="bg-[#1C2541] text-[#FAF6EE] px-8 py-3 rounded-full font-bold hover:bg-[#2a3a63] transition inline-block"
+          className="bg-[#1C2541] text-[#FAF6EE] px-8 py-3 rounded-lg font-bold hover:bg-[#2a3a63] transition inline-block"
         >
           Back to Home
         </Link>

@@ -4,7 +4,6 @@ import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 
-const FONT = { fontFamily: "'Fraunces', Georgia, serif" };
 const NAVY=[28,37,65], GOLD=[212,168,87], CREAM=[250,246,238], MAROON=[110,44,58], SLATE=[107,119,133];
 
 async function exportDayPDF(program, day) {
@@ -60,7 +59,7 @@ async function exportDayPDF(program, day) {
     doc.autoTable({
       startY: y,
       head: [['Session','Speaker','Time','Present','Absent','Total']],
-      body: day.sessions.map(s=>[s.title, s.speaker||'—', s.start_time||'', s.present, s.absent, s.total]),
+      body: day.sessions.map(s=>[s.title, s.speaker||'N/A', s.start_time||'', s.present, s.absent, s.total]),
       headStyles: { fillColor: NAVY, textColor: CREAM, fontStyle:'bold' },
       bodyStyles: { textColor: NAVY },
       alternateRowStyles: { fillColor: [244,241,235] },
@@ -109,7 +108,7 @@ async function exportOverallPDF(report) {
   doc.autoTable({
     startY: y,
     head: [['Day','Date','Label','Present','New Reg']],
-    body: days.map(d=>[`Day ${d.day_number}`, d.date, d.label||'—', d.total_present, d.registrations_today]),
+    body: days.map(d=>[`Day ${d.day_number}`, d.date, d.label||'N/A', d.total_present, d.registrations_today]),
     headStyles: { fillColor: NAVY, textColor: CREAM, fontStyle:'bold' },
     bodyStyles: { textColor: NAVY },
     alternateRowStyles: { fillColor: [244,241,235] },
@@ -186,7 +185,6 @@ export default function AdminReports() {
 
 useEffect(() => {
   const controller = new AbortController();
-  
   apiService.getPrograms({ signal: controller.signal })
     .then(r => {
       const data = r.data.results ?? r.data;
@@ -200,7 +198,6 @@ useEffect(() => {
         setLoading(false);
       }
     });
-    
   return () => controller.abort();
 }, []);
 
@@ -218,15 +215,14 @@ useEffect(() => {
 
   return (
     <div>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap');`}</style>
       <p className="text-[#6E2C3A] text-xs font-semibold tracking-[0.25em] uppercase mb-1">Admin Dashboard</p>
-      <h2 className="text-3xl font-bold text-[#1C2541] mb-8" style={FONT}>Reports</h2>
+      <h2 className="text-3xl font-bold text-[#1C2541] mb-8">Reports</h2>
 
       {/* Program selector */}
       <div className="flex flex-wrap gap-2 mb-8">
         {programs.map(p=>(
           <button key={p.id} onClick={()=>setProgramId(p.id)}
-            className={`px-4 py-2 rounded-full text-sm font-semibold border transition ${
+            className={`px-4 py-2 rounded-lg text-sm font-semibold border transition ${
               programId===p.id?'bg-[#1C2541] text-[#FAF6EE] border-[#1C2541]':'bg-white text-[#1C2541] border-[#1C2541]/15 hover:bg-[#FAF6EE]'}`}>
             {p.name}
           </button>
@@ -241,11 +237,11 @@ useEffect(() => {
           <div className="bg-white rounded-2xl border border-[#1C2541]/10 shadow-sm p-6 mb-6">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div>
-                <h3 className="text-xl font-bold text-[#1C2541]" style={FONT}>{report.program.name}</h3>
+                <h3 className="text-xl font-bold text-[#1C2541]">{report.program.name}</h3>
                 <p className="text-sm text-[#6B7785]">{report.program.theme} · {report.program.start_date} – {report.program.end_date}</p>
                 <div className="flex gap-6 mt-3">
-                  <div><p className="text-2xl font-bold text-[#1C2541]" style={FONT}>{report.total_registrations}</p><p className="text-xs text-[#6B7785] uppercase tracking-widest">Registered</p></div>
-                  <div><p className="text-2xl font-bold text-[#1C2541]" style={FONT}>{report.unique_attendees}</p><p className="text-xs text-[#6B7785] uppercase tracking-widest">Unique Attendees</p></div>
+                  <div><p className="text-2xl font-bold text-[#1C2541]">{report.total_registrations}</p><p className="text-xs text-[#6B7785] uppercase tracking-widest">Registered</p></div>
+                  <div><p className="text-2xl font-bold text-[#1C2541]">{report.unique_attendees}</p><p className="text-xs text-[#6B7785] uppercase tracking-widest">Unique Attendees</p></div>
                 </div>
               </div>
               <div className="flex gap-3 flex-shrink-0">
@@ -262,7 +258,7 @@ useEffect(() => {
           </div>
 
           {/* Per-day cards */}
-          <h3 className="font-bold text-[#1C2541] mb-4" style={FONT}>Per-Day Reports</h3>
+          <h3 className="font-bold text-[#1C2541] mb-4">Per-Day Reports</h3>
           <div className="grid gap-4">
             {report.days.map(day => (
               <div key={day.id} className="bg-white rounded-2xl border border-[#1C2541]/10 shadow-sm p-5">
@@ -270,13 +266,13 @@ useEffect(() => {
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
                       <span className="bg-[#1C2541] text-[#FAF6EE] text-xs font-bold px-3 py-1 rounded-full">Day {day.day_number}</span>
-                      <p className="font-bold text-[#1C2541]" style={FONT}>{day.date}{day.label&&` – ${day.label}`}</p>
+                      <p className="font-bold text-[#1C2541]">{day.date}{day.label && ` (${day.label})`}</p>
                     </div>
                     <div className="flex gap-6 mb-4">
-                      <div><p className="text-xl font-bold text-[#1C2541]" style={FONT}>{day.total_present}</p><p className="text-[10px] text-[#6B7785] uppercase tracking-widest">Present</p></div>
-                      <div><p className="text-xl font-bold text-[#6E2C3A]" style={FONT}>{day.by_sex?.M||0}</p><p className="text-[10px] text-[#6B7785] uppercase tracking-widest">Male</p></div>
-                      <div><p className="text-xl font-bold text-[#6E2C3A]" style={FONT}>{day.by_sex?.F||0}</p><p className="text-[10px] text-[#6B7785] uppercase tracking-widest">Female</p></div>
-                      <div><p className="text-xl font-bold text-[#1C2541]" style={FONT}>{day.registrations_today}</p><p className="text-[10px] text-[#6B7785] uppercase tracking-widest">New Reg</p></div>
+                      <div><p className="text-xl font-bold text-[#1C2541]">{day.total_present}</p><p className="text-[10px] text-[#6B7785] uppercase tracking-widest">Present</p></div>
+                      <div><p className="text-xl font-bold text-[#6E2C3A]">{day.by_sex?.M||0}</p><p className="text-[10px] text-[#6B7785] uppercase tracking-widest">Male</p></div>
+                      <div><p className="text-xl font-bold text-[#6E2C3A]">{day.by_sex?.F||0}</p><p className="text-[10px] text-[#6B7785] uppercase tracking-widest">Female</p></div>
+                      <div><p className="text-xl font-bold text-[#1C2541]">{day.registrations_today}</p><p className="text-[10px] text-[#6B7785] uppercase tracking-widest">New Reg</p></div>
                     </div>
 
                     {/* Sessions */}
@@ -296,7 +292,7 @@ useEffect(() => {
                             {day.sessions.map(s=>(
                               <tr key={s.id} className="border-b border-[#1C2541]/5 last:border-0">
                                 <td className="py-2 pr-4 font-medium text-[#1C2541]">{s.title}</td>
-                                <td className="py-2 pr-4 text-[#6B7785]">{s.speaker||'—'}</td>
+                                <td className="py-2 pr-4 text-[#6B7785]">{s.speaker||'N/A'}</td>
                                 <td className="py-2 pr-4 font-mono font-bold text-[#1C2541]">{s.present}</td>
                                 <td className="py-2 pr-4 font-mono font-bold text-[#6E2C3A]">{s.absent}</td>
                                 <td className="py-2 font-mono text-[#6B7785]">{s.total}</td>

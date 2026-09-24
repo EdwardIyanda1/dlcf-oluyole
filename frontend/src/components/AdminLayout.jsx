@@ -1,14 +1,19 @@
 import { useState } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import Logo from './Logo';
+import MenuIcon from './MenuIcon';
+import {
+  IconOverview, IconPrograms, IconAttendance,
+  IconReports, IconParticipants, IconMessaging, IconArrowLeft,
+} from './icons';
 
 const NAV = [
-  { path: '/admin',              label: 'Overview',      icon: '◈' },
-  { path: '/admin/programs',     label: 'Programs',      icon: '◉' },
-  { path: '/admin/attendance',   label: 'Attendance',    icon: '◎' },
-  { path: '/admin/reports',      label: 'Reports',       icon: '◐' },
-  { path: '/admin/participants', label: 'All Registered',icon: '◍' },
-  { path: '/admin/messaging',    label: 'Messaging',     icon: '✉' },
+  { path: '/admin',              label: 'Overview',       Icon: IconOverview },
+  { path: '/admin/programs',     label: 'Programs',       Icon: IconPrograms },
+  { path: '/admin/attendance',   label: 'Attendance',     Icon: IconAttendance },
+  { path: '/admin/reports',      label: 'Reports',        Icon: IconReports },
+  { path: '/admin/participants', label: 'All Registered', Icon: IconParticipants },
+  { path: '/admin/messaging',    label: 'Messaging',      Icon: IconMessaging },
 ];
 
 export default function AdminLayout() {
@@ -19,7 +24,6 @@ export default function AdminLayout() {
 
   return (
     <div className="min-h-screen bg-[#FAF6EE] flex flex-col md:flex-row">
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap');`}</style>
 
       {/* Mobile top bar */}
       <div className="md:hidden bg-[#1C2541] px-4 py-3 flex justify-between items-center">
@@ -27,8 +31,13 @@ export default function AdminLayout() {
           <Logo size={28} light withText={false} />
           <span className="font-bold text-[#D4A857] text-sm tracking-wide">Admin Panel</span>
         </div>
-        <button onClick={() => setOpen(!open)} className="text-[#FAF6EE] text-xl">
-          {open ? '✕' : '☰'}
+        <button
+          onClick={() => setOpen(!open)}
+          className="text-[#FAF6EE] p-1"
+          aria-label={open ? 'Close menu' : 'Open menu'}
+          aria-expanded={open}
+        >
+          <MenuIcon open={open} />
         </button>
       </div>
 
@@ -52,14 +61,18 @@ export default function AdminLayout() {
                   : 'text-[#FAF6EE]/60 hover:bg-[#FAF6EE]/10 hover:text-[#FAF6EE]'
               }`}
             >
-              <span className="text-base leading-none">{item.icon}</span>
+              <item.Icon className="w-4.5 h-4.5 flex-shrink-0" />
               {item.label}
             </Link>
           ))}
         </nav>
         <div className="mt-auto pt-6 hidden md:block border-t border-[#FAF6EE]/10">
-          <Link to="/" className="text-[#FAF6EE]/30 text-xs hover:text-[#FAF6EE]/60 transition">
-            ← Back to site
+          <Link
+            to="/"
+            className="flex items-center gap-2 text-[#FAF6EE]/40 text-xs hover:text-[#FAF6EE]/70 transition px-3"
+          >
+            <IconArrowLeft className="w-3.5 h-3.5" />
+            Back to site
           </Link>
         </div>
       </aside>

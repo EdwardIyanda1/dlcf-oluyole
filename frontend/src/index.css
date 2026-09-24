@@ -1,1 +1,29 @@
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&display=swap');
 @import "tailwindcss";
+
+@theme {
+  --font-sans: 'Sora', ui-sans-serif, system-ui, -apple-system, sans-serif;
+
+  --color-brand-navy: #1C2541;
+  --color-brand-navy-light: #2a3a63;
+  --color-brand-gold: #D4A857;
+  --color-brand-gold-light: #e6bd72;
+  --color-brand-maroon: #6E2C3A;
+  --color-brand-cream: #FAF6EE;
+  --color-brand-gray: #6B7785;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Sora', ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-brand-gold);
+  outline-offset: 2px;
+}

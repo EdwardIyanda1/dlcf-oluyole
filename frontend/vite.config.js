@@ -8,4 +8,8 @@ export default defineConfig({
     tailwindcss(),
     react()
   ],
+  build: {
+    // Never ship source maps to production.
+    sourcemap: false,
+  },
 })

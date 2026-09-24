@@ -57,6 +57,58 @@ class ParticipantViewSet(viewsets.ModelViewSet):
                 breakdown[cat][row['sex']] = row['n']
         return Response({'total': total, 'by_category': breakdown})
 
+    @action(detail=True, methods=['get'], url_path='attendance-summary')
+    def attendance_summary(self, request, pk=None):
+        """
+        This participant's attendance rate, optionally scoped to one program
+        via ?program=<id>. Defaults to every program they're registered for.
+        Returns sessions attended vs. sessions held, an overall percentage,
+        and a day-by-day breakdown -- the core "how present has this person
+        been" view for a single attendee.
+        """
+        participant = self.get_object()
+        program_id = request.query_params.get('program')
+
+        sessions_qs = DaySession.objects.select_related('retreat_day__program')
+        if program_id:
+            sessions_qs = sessions_qs.filter(retreat_day__program_id=program_id)
+        else:
+            registered_program_ids = participant.registrations.values_list('program_id', flat=True)
+            sessions_qs = sessions_qs.filter(retreat_day__program_id__in=registered_program_ids)
+
+        present_session_ids = set(
+            Attendance.objects.filter(
+                participant=participant, session__in=sessions_qs, present=True
+            ).values_list('session_id', flat=True)
+        )
+
+        total = sessions_qs.count()
+        present = len(present_session_ids)
+        rate = round((present / total) * 100, 1) if total else 0.0
+
+        by_day = {}
+        for s in sessions_qs.order_by('retreat_day__day_number', 'start_time'):
+            day = s.retreat_day
+            entry = by_day.setdefault(day.id, {
+                'day_number': day.day_number,
+                'date': str(day.date),
+                'label': day.label,
+                'present': 0,
+                'total': 0,
+            })
+            entry['total'] += 1
+            if s.id in present_session_ids:
+                entry['present'] += 1
+
+        return Response({
+            'participant_id':   participant.id,
+            'participant':      participant.full_name,
+            'sessions_attended': present,
+            'sessions_total':   total,
+            'attendance_rate':  rate,
+            'by_day':           list(by_day.values()),
+        })
+
     @action(detail=False, methods=['get'], url_path='export/excel',
             permission_classes=[IsAuthenticated, IsAdminUser])
     def export_excel(self, request):
@@ -102,13 +154,18 @@ class ProgramViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['get'], url_path='report')
     def full_report(self, request, pk=None):
-        """Overall retreat report: all days + per-day breakdown."""
+        """Overall retreat report: all days + per-day breakdown + overall attendance rate."""
         program = self.get_object()
         data, total_registrations, unique_attendees = self._report_data(program)
+        attendance_rate = (
+            round((unique_attendees / total_registrations) * 100, 1)
+            if total_registrations else 0.0
+        )
         return Response({
             'program':             ProgramSerializer(program).data,
             'total_registrations': total_registrations,
             'unique_attendees':    unique_attendees,
+            'attendance_rate':     attendance_rate,
             'days':                data,
         })
 

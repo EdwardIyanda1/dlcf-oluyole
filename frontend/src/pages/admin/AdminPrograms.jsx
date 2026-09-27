@@ -152,11 +152,20 @@ function ManageSessions({ program, onBack }) {
       toast.warning('Date and day number required.');
       return;
     }
-    await apiService.createDay(program.id, newDay);
-    setNewDay({ date: '', day_number: '', label: '' });
-    setShowNewDay(false);
-    loadDays();
-    toast.success('Day added!');
+    
+    try {
+      // Parse day_number to an integer to satisfy backend validation
+      const payload = { ...newDay, day_number: parseInt(newDay.day_number, 10) };
+      await apiService.createDay(program.id, payload);
+      
+      setNewDay({ date: '', day_number: '', label: '' });
+      setShowNewDay(false);
+      loadDays();
+      toast.success('Day added!');
+    } catch (err) {
+      console.error(err);
+      toast.error(err.response?.data?.detail || 'Failed to add day. Check your inputs.');
+    }
   };
 
   const addSession = async () => {
@@ -164,11 +173,17 @@ function ManageSessions({ program, onBack }) {
       toast.warning('Title and start time required.');
       return;
     }
-    await apiService.createSession(program.id, selDay.id, { ...newSes, retreat_day: selDay.id });
-    setNewSes({ title: '', speaker: '', start_time: '', end_time: '' });
-    setShowNewSes(false);
-    loadSessions(selDay);
-    toast.success('Session added!');
+    
+    try {
+      await apiService.createSession(program.id, selDay.id, { ...newSes, retreat_day: selDay.id });
+      setNewSes({ title: '', speaker: '', start_time: '', end_time: '' });
+      setShowNewSes(false);
+      loadSessions(selDay);
+      toast.success('Session added!');
+    } catch (err) {
+      console.error(err);
+      toast.error(err.response?.data?.detail || 'Failed to add session.');
+    }
   };
 
   return (

@@ -58,11 +58,13 @@ INSTALLED_APPS = [
     'retreat',
 ]
 
+CORS_ALLOW_CREDENTIALS = True
+
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
     "http://10.90.250.82:5174",
-    "https://dlcf-oluyole.vercel.app/"
+    "https://dlcf-oluyole.vercel.app"
 ] + [origin.strip() for origin in os.environ.get("EXTRA_CORS_ORIGINS", "").split(",") if origin.strip()]
 
 MIDDLEWARE = [

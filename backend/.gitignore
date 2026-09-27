@@ -3,3 +3,5 @@ db.sqlite3
 config/__pycache__
 retreat/__pycache__
 retreat/migrations/__pycache__
+retreat/management/__pycache__
+retreat/management/commands/__pycache__

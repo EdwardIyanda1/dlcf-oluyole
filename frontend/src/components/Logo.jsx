@@ -9,7 +9,7 @@ export default function Logo({ size = 48, withText = true, light = false }) {
             className="text-[11px] font-semibold tracking-[0.25em] uppercase"
             style={{ color: '#D4A857' }}
           >
-            DLCF &middot; Oluyole Region
+            DLCF &middot; South West
           </p>
           <p
             className="text-lg font-bold tracking-tight"

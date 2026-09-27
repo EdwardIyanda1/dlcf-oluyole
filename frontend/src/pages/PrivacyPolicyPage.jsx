@@ -7,7 +7,7 @@ export default function PrivacyPolicyPage() {
     <div className="min-h-screen bg-[#FAF6EE] flex flex-col">
       <SEO
         title="Privacy Policy"
-        description="How Deeper Life Campus Fellowship, Oluyole Region collects, uses, and protects information gathered through retreat registration, check-in, and attendance tracking."
+        description="How Deeper Life Campus Fellowship, South West collects, uses, and protects information gathered through retreat registration, check-in, and attendance tracking."
       />
       <Header />
 
@@ -22,7 +22,7 @@ export default function PrivacyPolicyPage() {
           <section>
             <h2 className="text-xl font-bold text-[#1C2541] mb-2">1. Who we are</h2>
             <p>
-              This system is operated by Deeper Life Campus Fellowship (DLCF), Oluyole Region,
+              This system is operated by Deeper Life Campus Fellowship (DLCF), South West,
               to manage registration, check-in, and attendance for its retreats and related
               programmes. This policy explains what information we collect from participants
               and administrators, why we collect it, and how it is handled.
@@ -87,7 +87,7 @@ export default function PrivacyPolicyPage() {
             <h2 className="text-xl font-bold text-[#1C2541] mb-2">7. Contact</h2>
             <p>
               For questions about this policy or your data, please speak with a member of the
-              DLCF Oluyole Region administrative team.
+              DLCF South West administrative team.
             </p>
           </section>
         </div>

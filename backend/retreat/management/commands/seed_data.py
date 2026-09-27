@@ -2,7 +2,7 @@
 Management command: seed_data
 
 Fills the database with a LARGE, realistic dataset for load-testing and
-demoing the Deeper Life Campus Fellowship (Oluyole Region) retreat system.
+demoing the Deeper Life Campus Fellowship (South West) retreat system.
 
 USAGE
 -----
@@ -114,7 +114,7 @@ PROGRAM_SPECS = [
     ("Oluyole Zone Workers' Retreat 2025",              "Sharpened for Service",       -400, None),
     ("Ibadan Region Youth Camp Meeting 2025",            "Arise and Shine",             -120, None),
     ("Deeper Life Campus Fellowship Leadership Retreat", "Raising Kingdom Leaders",       -2, None),
-    ("DLCF Oluyole Region Annual Retreat 2026",          "Gather. Worship. Be Renewed.",  20, None),
+    ("DLCF South West Annual Retreat 2026",          "Gather. Worship. Be Renewed.",  20, None),
     ("Children's Camp Meeting 2026",                     "Little Lights, Big Faith",      60, None),
     ("Deeper Life Global Workers' Conference 2026",      "Equipped and Sent",            150, None),
 ]

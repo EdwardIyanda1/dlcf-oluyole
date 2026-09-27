@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 
-const SITE_NAME = 'DLCF Oluyole Region Retreat';
+const SITE_NAME = 'DLCF South West Retreat';
 
 function setMeta(name, content, attr = 'name') {
   if (!content) return;

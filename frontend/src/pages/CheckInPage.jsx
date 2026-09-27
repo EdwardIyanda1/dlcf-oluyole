@@ -76,7 +76,7 @@ export default function CheckInPage() {
     <div className="min-h-screen bg-[#FAF6EE] py-12 px-6">
       <SEO
         title="Check In"
-        description="Scan your QR code or enter your check-in code to confirm attendance at DLCF Oluyole Region retreat sessions."
+        description="Scan your QR code or enter your check-in code to confirm attendance at DLCF South West retreat sessions."
       />
 
       <div className="max-w-md mx-auto">

@@ -31,7 +31,7 @@ export default function LandingPage() {
     <div className="min-h-screen bg-[#FAF6EE]">
       <SEO
         title="Home"
-        description="Register, check in, and track attendance for Deeper Life Campus Fellowship Oluyole Region retreats."
+        description="Register, check in, and track attendance for Deeper Life Campus Fellowship South West retreats."
       />
 
       {/* Hero */}
@@ -57,7 +57,7 @@ export default function LandingPage() {
             <Logo size={72} light withText={false} />
           </div>
           <p className="text-[#D4A857] text-sm font-semibold tracking-[0.3em] uppercase mb-4">
-            Deeper Life Campus Fellowship &mdash; Oluyole Region { new Date().getFullYear() }
+            Deeper Life Campus Fellowship &mdash; South West { new Date().getFullYear() }
           </p>
           <h1
             className="text-5xl md:text-6xl font-bold text-[#FAF6EE] mb-6 leading-tight"

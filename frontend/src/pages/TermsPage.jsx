@@ -7,7 +7,7 @@ export default function TermsPage() {
     <div className="min-h-screen bg-[#FAF6EE] flex flex-col">
       <SEO
         title="Terms & Conditions"
-        description="Terms and conditions for registering, checking in, and using the DLCF Oluyole Region retreat management system."
+        description="Terms and conditions for registering, checking in, and using the DLCF South West retreat management system."
       />
       <Header />
 
@@ -24,7 +24,7 @@ export default function TermsPage() {
             <p>
               By registering for a retreat, checking in through this system, or using the admin
               panel, you agree to these terms. This system is provided by Deeper Life Campus
-              Fellowship (DLCF), Oluyole Region, solely to support registration, check-in, and
+              Fellowship (DLCF), South West, solely to support registration, check-in, and
               attendance management for its retreats.
             </p>
           </section>
@@ -79,7 +79,7 @@ export default function TermsPage() {
           <section>
             <h2 className="text-xl font-bold text-[#1C2541] mb-2">7. Contact</h2>
             <p>
-              Questions about these terms can be directed to a member of the DLCF Oluyole Region
+              Questions about these terms can be directed to a member of the DLCF South West
               administrative team.
             </p>
           </section>

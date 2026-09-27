@@ -20,7 +20,7 @@ export default function Footer() {
         </nav>
       </div>
       <div className="border-t border-[#FAF6EE]/10 py-4 text-center text-xs text-[#FAF6EE]/40">
-        &copy; {year} Deeper Life Campus Fellowship, Oluyole Region. All rights reserved.
+        &copy; {year} Deeper Life Campus Fellowship, South West. All rights reserved.
       </div>
     </footer>
   );

@@ -147,15 +147,20 @@ function ManageSessions({ program, onBack }) {
     return () => controller.abort();
   }, [selDay]);
 
-  const addDay = async () => {
+const addDay = async () => {
     if (!newDay.date || !newDay.day_number) {
       toast.warning('Date and day number required.');
       return;
     }
     
     try {
-      // Parse day_number to an integer to satisfy backend validation
-      const payload = { ...newDay, day_number: parseInt(newDay.day_number, 10) };
+      // Inject the program ID and parse the day_number as an integer
+      const payload = { 
+        ...newDay, 
+        day_number: parseInt(newDay.day_number, 10),
+        program: program.id 
+      };
+      
       await apiService.createDay(program.id, payload);
       
       setNewDay({ date: '', day_number: '', label: '' });
@@ -164,7 +169,7 @@ function ManageSessions({ program, onBack }) {
       toast.success('Day added!');
     } catch (err) {
       console.error(err);
-      toast.error(err.response?.data?.detail || 'Failed to add day. Check your inputs.');
+      toast.error(err.response?.data?.detail || 'Failed to add day.');
     }
   };
 

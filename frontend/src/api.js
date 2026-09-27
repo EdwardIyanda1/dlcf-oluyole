@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 const DEBUG = false;
-const BASE_URL = 'http://127.0.0.1:8000/api';
+const BASE_URL = 'https://dlcf-oluyole-n911.vercel.app/api';
 
 // ── Token helpers ─────────────────────────────────────────────────────────────
 const TOKEN_KEY = 'dlcf_token';

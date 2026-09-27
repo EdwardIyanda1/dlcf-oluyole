@@ -98,18 +98,11 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 #
-# Set DATABASE_URL to a Postgres connection string (e.g. from Render's
-# database dashboard) to use it. SQLite only works for local development --
-# most hosts (Vercel included) have a read-only/ephemeral filesystem, so it
-# can't hold a real database in production.
+# On Vercel, add a Postgres database from the project's Storage tab -- it
+# sets DATABASE_URL automatically. SQLite only works for local development:
+# Vercel's filesystem is read-only/ephemeral, so it can't hold a real database.
 if os.environ.get("DATABASE_URL"):
     _db_url = urllib.parse.urlparse(os.environ["DATABASE_URL"])
-    _db_options = {}
-    # Render (and most managed Postgres providers) require SSL on external
-    # connections. Set DATABASE_SSL_REQUIRE=false to opt out -- e.g. for a
-    # local Postgres instance, or Render's internal connection string.
-    if os.environ.get("DATABASE_SSL_REQUIRE", "true").lower() == "true":
-        _db_options["sslmode"] = "require"
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.postgresql",
@@ -118,7 +111,6 @@ if os.environ.get("DATABASE_URL"):
             "PASSWORD": _db_url.password,
             "HOST": _db_url.hostname,
             "PORT": _db_url.port,
-            "OPTIONS": _db_options,
         }
     }
 else:

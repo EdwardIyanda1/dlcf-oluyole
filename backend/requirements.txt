@@ -1,5 +1,5 @@
 django
-dotenv
+python-dotenv
 djangorestframework==3.18.1
 django-cors-headers
 djangorestframework-simplejwt
@@ -8,3 +8,5 @@ google-auth
 requests
 openpyxl
 reportlab
+psycopg2-binary
+whitenoise

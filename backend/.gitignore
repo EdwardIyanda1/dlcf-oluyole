@@ -1,2 +1,5 @@
 .env
 db.sqlite3
+config/__pycache__
+retreat/__pycache__
+retreat/migrations/__pycache__

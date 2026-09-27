@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 from datetime import timedelta
 from pathlib import Path
 import os
+import urllib.parse
 from dotenv import load_dotenv
 
 EMAIL_TIMEOUT = 10
@@ -27,10 +28,17 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-fnlh+feuxh3v0+mg+rzs=8zzkn!)42^ndvv=$f=sg$lf+(8an3'
+# In production (Vercel), set SECRET_KEY as an environment variable.
+# The hardcoded value only backs local development so `manage.py runserver`
+# still works out of the box on a fresh checkout.
+SECRET_KEY = os.environ.get(
+    "SECRET_KEY",
+    'django-insecure-fnlh+feuxh3v0+mg+rzs=8zzkn!)42^ndvv=$f=sg$lf+(8an3',
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# Defaults to off; set DEBUG=True in your local .env to enable it for development.
+DEBUG = os.environ.get("DEBUG", "false").lower() == "true"
 
 ALLOWED_HOSTS = ['*']
 
@@ -54,7 +62,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
     "http://10.90.250.82:5174",
-]
+] + [origin.strip() for origin in os.environ.get("EXTRA_CORS_ORIGINS", "").split(",") if origin.strip()]
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
@@ -89,13 +97,29 @@ WSGI_APPLICATION = 'config.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+#
+# On Vercel, add a Postgres database from the project's Storage tab -- it
+# sets DATABASE_URL automatically. SQLite only works for local development:
+# Vercel's filesystem is read-only/ephemeral, so it can't hold a real database.
+if os.environ.get("DATABASE_URL"):
+    _db_url = urllib.parse.urlparse(os.environ["DATABASE_URL"])
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": _db_url.path.lstrip("/"),
+            "USER": _db_url.username,
+            "PASSWORD": _db_url.password,
+            "HOST": _db_url.hostname,
+            "PORT": _db_url.port,
+        }
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
@@ -136,6 +160,9 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+# Vercel runs collectstatic automatically and serves everything gathered
+# here from its CDN, so Django itself never has to serve static files.
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (

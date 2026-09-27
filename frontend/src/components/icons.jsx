@@ -77,6 +77,15 @@ export function IconArrowLeft({ className = 'w-4 h-4' }) {
   );
 }
 
+export function IconShield({ className = 'w-4.5 h-4.5' }) {
+  return (
+    <svg {...base} className={className} aria-hidden="true">
+      <path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z" />
+      <path d="M9.5 12l1.8 1.8L14.5 10" />
+    </svg>
+  );
+}
+
 export function IconCheck({ className = 'w-6 h-6' }) {
   return (
     <svg {...base} className={className} aria-hidden="true">

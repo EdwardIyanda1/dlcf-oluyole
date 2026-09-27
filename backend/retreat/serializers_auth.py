@@ -7,6 +7,7 @@ from google.oauth2 import id_token as google_id_token
 from google.auth.transport import requests as google_requests
 
 from .models import Participant
+from .permissions import get_role
 
 User = get_user_model()
 
@@ -41,6 +42,7 @@ class EmailLoginSerializer(serializers.Serializer):
                 'email':     user.email,
                 'full_name': participant.full_name if participant else user.get_full_name(),
                 'code':      participant.code      if participant else None,
+                'role':      get_role(user),
                 'is_admin':  user.is_staff or user.is_superuser,
             },
         }
@@ -106,6 +108,7 @@ class GoogleLoginSerializer(serializers.Serializer):
                 'email':     user.email,
                 'full_name': participant.full_name,
                 'code':      participant.code,
+                'role':      get_role(user),
                 'is_admin':  user.is_staff or user.is_superuser,
             },
         }

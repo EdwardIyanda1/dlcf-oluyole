@@ -140,6 +140,13 @@ const apiService = {
       present,
     }),
 
+  // Usher headcount: a tally by category + gender for everyone physically in
+  // the room for a session (not a per-participant roster).
+  getHeadcount: (programId, dayId, sessionId, config = {}) =>
+    api.get(`/programs/${programId}/days/${dayId}/sessions/${sessionId}/headcount/`, config),
+  postHeadcount: (programId, dayId, sessionId, counts) =>
+    api.post(`/programs/${programId}/days/${dayId}/sessions/${sessionId}/headcount/`, { counts }),
+
   // --- Registrations ---
   getRegistrations: (programId, params = {}, config = {}) =>
     api.get('/registrations/', { params: { program: programId, ...params }, ...config }),
@@ -174,6 +181,10 @@ const apiService = {
     api.get(`/programs/${programId}/days/${dayId}/sessions/${sessionId}/export/excel/`, { params, responseType: 'blob' }),
   exportAttendancePdf: (programId, dayId, sessionId, params = {}) =>
     api.get(`/programs/${programId}/days/${dayId}/sessions/${sessionId}/export/pdf/`, { params, responseType: 'blob' }),
+
+  // --- Users & permission levels (Admin only) ---
+  getUsers: (config = {}) => api.get('/users/', config),
+  setUserRole: (userId, role) => api.patch(`/users/${userId}/role/`, { role }),
 };
 
 // Use in .catch() blocks to skip errors caused by AbortController cleanup

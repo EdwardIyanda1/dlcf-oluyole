@@ -1,26 +1,38 @@
 import { useState, useEffect } from 'react';
-import apiService, { isCanceled } from '../../api';
+import apiService, { auth, isCanceled } from '../../api';
 import ExportButtons from '../../components/ExportButtons';
 
+const CATEGORIES = ['Adult', 'Campus', 'Youth', 'Children'];
+const SEXES = [['M', 'Male'], ['F', 'Female']];
 
 export default function AdminAttendance() {
+  const role   = auth.getUser()?.role;
+  const isAdmin = role === 'admin';
+
   const [programs,   setPrograms]   = useState([]);
   const [programId,  setProgramId]  = useState(null);
   const [days,       setDays]       = useState([]);
   const [dayId,      setDayId]      = useState(null);
   const [sessions,   setSessions]   = useState([]);
   const [sessionId,  setSessionId]  = useState(null);
+  const [loading,    setLoading]    = useState(true);
+
+  // Headcount grid: { Adult: { M: 0, F: 0 }, ... }
+  const [counts,     setCounts]     = useState({});
+  const [hcLoading,  setHcLoading]  = useState(false);
+  const [saving,     setSaving]     = useState(false);
+  const [savedAt,    setSavedAt]    = useState(null);
+
+  // Optional detailed roster, admin-only, for correcting individual check-ins.
+  const [showRoster, setShowRoster] = useState(false);
   const [records,    setRecords]    = useState([]);
   const [search,     setSearch]     = useState('');
-  const [loading,    setLoading]    = useState(true);
-  const [saving,     setSaving]     = useState(false);
+  const [rosterSaving, setRosterSaving] = useState(false);
 
-useEffect(() => {
+  useEffect(() => {
     const controller = new AbortController();
     apiService.getPrograms({ signal: controller.signal }).then(r => {
-      // Safely extract the array whether pagination is enabled or not
-      const data = r.data.results ?? r.data; 
-      
+      const data = r.data.results ?? r.data;
       const active = data.filter(p => p.status === 'ongoing' || p.status === 'grace');
       const list   = active.length ? active : data;
       setPrograms(list);
@@ -33,30 +45,24 @@ useEffect(() => {
     });
     return () => controller.abort();
   }, []);
-  
-useEffect(() => {
+
+  useEffect(() => {
     if (!programId) return;
-    setDayId(null); setSessions([]); setSessionId(null); setRecords([]);
-    
+    setDayId(null); setSessions([]); setSessionId(null);
     const controller = new AbortController();
     apiService.getDays(programId, { signal: controller.signal }).then(r => {
-      // Safely extract the array
       const data = r.data.results ?? r.data;
-      
       setDays(data);
       const today = new Date().toISOString().slice(0, 10);
       const todayDay = data.find(d => d.date === today);
       setDayId((todayDay || data[0])?.id || null);
-    }).catch(err => { 
-      if (!isCanceled(err)) console.error(err); 
-    });
-    
+    }).catch(err => { if (!isCanceled(err)) console.error(err); });
     return () => controller.abort();
   }, [programId]);
 
   useEffect(() => {
     if (!programId || !dayId) return;
-    setSessionId(null); setRecords([]);
+    setSessionId(null);
     const controller = new AbortController();
     apiService.getSessions(programId, dayId, { signal: controller.signal }).then(r => {
       const data = r.data.results ?? r.data;
@@ -66,47 +72,85 @@ useEffect(() => {
     return () => controller.abort();
   }, [dayId]);
 
+  // Load the headcount grid whenever the session changes.
   useEffect(() => {
-    if (!programId || !dayId || !sessionId) { setRecords([]); return; }
+    if (!programId || !dayId || !sessionId) { setCounts({}); return; }
+    setHcLoading(true);
+    setSavedAt(null);
+    const controller = new AbortController();
+    apiService.getHeadcount(programId, dayId, sessionId, { signal: controller.signal })
+      .then(r => {
+        const grid = {};
+        for (const cat of CATEGORIES) grid[cat] = { M: 0, F: 0 };
+        for (const row of r.data.rows) grid[row.category][row.sex] = row.count;
+        setCounts(grid);
+        setHcLoading(false);
+      })
+      .catch(err => { if (!isCanceled(err)) { console.error(err); setHcLoading(false); } });
+    return () => controller.abort();
+  }, [sessionId]);
+
+  // Load the optional detailed roster only when an admin opens it.
+  useEffect(() => {
+    if (!showRoster || !sessionId) return;
     const controller = new AbortController();
     apiService.getAttendance(programId, dayId, sessionId, { signal: controller.signal })
       .then(r => setRecords(r.data.results ?? r.data))
       .catch(err => { if (!isCanceled(err)) console.error(err); });
     return () => controller.abort();
-  }, [sessionId]);
+  }, [showRoster, sessionId]);
 
-  const toggle = async (participantId, current) => {
-    const next = !current;
-    setRecords(prev => prev.map(r => r.participant_id===participantId ? {...r, present:next} : r));
+  const setCount = (category, sex, value) => {
+    const n = Math.max(0, parseInt(value, 10) || 0);
+    setCounts(prev => ({ ...prev, [category]: { ...prev[category], [sex]: n } }));
+  };
+
+  const saveCounts = async () => {
     setSaving(true);
+    const payload = CATEGORIES.flatMap(cat =>
+      SEXES.map(([sex]) => ({ category: cat, sex, count: counts[cat]?.[sex] ?? 0 }))
+    );
     try {
-      await apiService.markAttendance(programId, dayId, sessionId, participantId, next);
-    } catch {
-      setRecords(prev => prev.map(r => r.participant_id===participantId ? {...r, present:current} : r));
+      await apiService.postHeadcount(programId, dayId, sessionId, payload);
+      setSavedAt(new Date());
+    } catch (err) {
+      console.error(err);
     }
     setSaving(false);
   };
 
-  const markAll = async (present) => {
-    setRecords(prev => prev.map(r => ({...r, present})));
-    await Promise.all(
-      records.map(r => apiService.markAttendance(programId, dayId, sessionId, r.participant_id, present))
-    );
+  const toggleAttendance = async (participantId, current) => {
+    const next = !current;
+    setRecords(prev => prev.map(r => r.participant_id === participantId ? { ...r, present: next } : r));
+    setRosterSaving(true);
+    try {
+      await apiService.markAttendance(programId, dayId, sessionId, participantId, next);
+    } catch {
+      setRecords(prev => prev.map(r => r.participant_id === participantId ? { ...r, present: current } : r));
+    }
+    setRosterSaving(false);
   };
 
-  const filtered      = records.filter(r => r.full_name.toLowerCase().includes(search.toLowerCase()));
-  const presentCount  = records.filter(r => r.present).length;
+  const filteredRecords = records.filter(r => r.full_name.toLowerCase().includes(search.toLowerCase()));
   const activeProgram = programs.find(p => p.id === programId);
   const activeDay     = days.find(d => d.id === dayId);
   const activeSession = sessions.find(s => s.id === sessionId);
 
-  if (loading) return <p className="text-[#6B7785]">Loading…</p>;
+  const total = CATEGORIES.reduce((sum, cat) => sum + (counts[cat]?.M || 0) + (counts[cat]?.F || 0), 0);
+  const totalBySex = {
+    M: CATEGORIES.reduce((sum, cat) => sum + (counts[cat]?.M || 0), 0),
+    F: CATEGORIES.reduce((sum, cat) => sum + (counts[cat]?.F || 0), 0),
+  };
+
+  if (loading) return <p className="text-[#6B7785]">Loading...</p>;
 
   return (
     <div>
       <p className="text-[#6E2C3A] text-xs font-semibold tracking-[0.25em] uppercase mb-1">Admin Dashboard</p>
-      <h2 className="text-3xl font-bold text-[#1C2541] mb-1">Attendance</h2>
-      <p className="text-[#6B7785] text-sm mb-8">Select a program → day → session to take attendance.</p>
+      <h2 className="text-3xl font-bold text-[#1C2541] mb-1">Attendance Headcount</h2>
+      <p className="text-[#6B7785] text-sm mb-8">
+        Pick a program, day and session, then enter how many people are in the room by age group and gender.
+      </p>
 
       {programs.length === 0
         ? <p className="text-[#6B7785]">No programs yet. Add one under Programs.</p>
@@ -148,7 +192,7 @@ useEffect(() => {
             ? <p className="text-[#6B7785] mb-4 text-sm">No sessions on this day yet.</p>
             : (
             <div className="mb-6">
-              <label className="block text-xs font-bold text-[#6B7785] uppercase tracking-widest mb-2">Session / Message</label>
+              <label className="block text-xs font-bold text-[#6B7785] uppercase tracking-widest mb-2">Session</label>
               <div className="flex flex-wrap gap-2">
                 {sessions.map(s => (
                   <button key={s.id} onClick={() => setSessionId(s.id)}
@@ -164,80 +208,143 @@ useEffect(() => {
 
           {sessionId && (
             <>
-              <div className="bg-white rounded-2xl border border-[#1C2541]/10 shadow-sm p-5 mb-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div className="bg-white rounded-2xl border border-[#1C2541]/10 shadow-sm p-5 mb-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
                   <h3 className="font-bold text-[#1C2541]">{activeSession?.title}</h3>
                   <p className="text-sm text-[#6B7785]">
-                    {activeProgram?.name} · Day {activeDay?.day_number} ({activeDay?.date})
-                    {activeSession?.speaker && ` · ${activeSession.speaker}`}
+                    {activeProgram?.name} - Day {activeDay?.day_number} ({activeDay?.date})
+                    {activeSession?.speaker && ` - ${activeSession.speaker}`}
                   </p>
-                  {saving && <p className="text-xs text-[#D4A857] mt-1">Saving…</p>}
                 </div>
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-3">
-                    {[{label:'Present',val:presentCount,color:'text-[#1C2541]'},
-                      {label:'Absent', val:records.length-presentCount,color:'text-[#6E2C3A]'},
-                      {label:'Total',  val:records.length,color:'text-[#1C2541]'}].map(s=>(
-                      <div key={s.label} className="text-center bg-[#FAF6EE] rounded-xl px-4 py-2">
-                        <p className={`text-2xl font-bold ${s.color}`}>{s.val}</p>
-                        <p className="text-[10px] uppercase tracking-widest text-[#6B7785]">{s.label}</p>
-                      </div>
-                    ))}
+                <div className="flex items-center gap-3">
+                  <div className="text-center bg-[#FAF6EE] rounded-xl px-4 py-2">
+                    <p className="text-2xl font-bold text-[#1C2541]">{totalBySex.M}</p>
+                    <p className="text-[10px] uppercase tracking-widest text-[#6B7785]">Male</p>
                   </div>
-                  <ExportButtons
-                    onExcel={() => apiService.exportAttendanceExcel(programId, dayId, sessionId, { search: search || undefined })}
-                    onPdf={() => apiService.exportAttendancePdf(programId, dayId, sessionId, { search: search || undefined })}
-                    excelName={`attendance_${activeSession?.title || 'session'}.xlsx`}
-                    pdfName={`attendance_${activeSession?.title || 'session'}.pdf`}
-                  />
+                  <div className="text-center bg-[#FAF6EE] rounded-xl px-4 py-2">
+                    <p className="text-2xl font-bold text-[#1C2541]">{totalBySex.F}</p>
+                    <p className="text-[10px] uppercase tracking-widest text-[#6B7785]">Female</p>
+                  </div>
+                  <div className="text-center bg-[#D4A857]/15 rounded-xl px-4 py-2">
+                    <p className="text-2xl font-bold text-[#6E2C3A]">{total}</p>
+                    <p className="text-[10px] uppercase tracking-widest text-[#6B7785]">Total</p>
+                  </div>
                 </div>
               </div>
 
-              <div className="flex flex-wrap gap-3 mb-4">
-                <input value={search} onChange={e=>setSearch(e.target.value)}
-                  placeholder="Search by name…"
-                  className="flex-1 min-w-48 border border-[#1C2541]/15 bg-white p-2.5 rounded-lg outline-none focus:ring-2 focus:ring-[#D4A857] transition text-sm" />
-                <button onClick={()=>markAll(true)}
-                  className="px-4 py-2 bg-[#1C2541] text-[#FAF6EE] rounded-lg text-sm font-semibold hover:bg-[#2a3a63] transition">
-                  Mark All Present
+              {hcLoading
+                ? <p className="text-[#6B7785] text-sm mb-4">Loading headcount...</p>
+                : (
+                <div className="bg-white rounded-2xl border border-[#1C2541]/10 overflow-hidden shadow-sm mb-4">
+                  <table className="w-full text-left">
+                    <thead className="bg-[#1C2541]">
+                      <tr>
+                        <th className="p-4 text-xs font-semibold tracking-widest uppercase text-[#FAF6EE]/70">Age Group</th>
+                        {SEXES.map(([sex, label]) => (
+                          <th key={sex} className="p-4 text-xs font-semibold tracking-widest uppercase text-[#FAF6EE]/70 text-center">{label}</th>
+                        ))}
+                        <th className="p-4 text-xs font-semibold tracking-widest uppercase text-[#FAF6EE]/70 text-right">Row Total</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {CATEGORIES.map(cat => {
+                        const rowTotal = (counts[cat]?.M || 0) + (counts[cat]?.F || 0);
+                        return (
+                          <tr key={cat} className="border-b border-[#1C2541]/5 last:border-0">
+                            <td className="p-4 font-semibold text-[#1C2541]">{cat}</td>
+                            {SEXES.map(([sex]) => (
+                              <td key={sex} className="p-3 text-center">
+                                <input
+                                  type="number" min="0" inputMode="numeric"
+                                  value={counts[cat]?.[sex] ?? 0}
+                                  onChange={e => setCount(cat, sex, e.target.value)}
+                                  className="w-20 text-center border border-[#1C2541]/15 rounded-lg p-2 font-semibold text-[#1C2541] outline-none focus:ring-2 focus:ring-[#D4A857] transition"
+                                />
+                              </td>
+                            ))}
+                            <td className="p-4 text-right font-bold text-[#6E2C3A]">{rowTotal}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              <div className="flex items-center gap-3 mb-8">
+                <button onClick={saveCounts} disabled={saving || hcLoading}
+                  className="px-5 py-2.5 bg-[#1C2541] text-[#FAF6EE] rounded-lg text-sm font-semibold hover:bg-[#2a3a63] transition disabled:opacity-50">
+                  {saving ? 'Saving...' : 'Save Headcount'}
                 </button>
-                <button onClick={()=>markAll(false)}
-                  className="px-4 py-2 border border-[#1C2541]/15 text-[#1C2541] rounded-lg text-sm font-semibold hover:bg-[#FAF6EE] transition">
-                  Clear All
-                </button>
+                {savedAt && (
+                  <p className="text-xs text-[#6B7785]">
+                    Saved at {savedAt.toLocaleTimeString()}
+                  </p>
+                )}
               </div>
 
-              <div className="bg-white rounded-2xl border border-[#1C2541]/10 overflow-x-auto shadow-sm">
-                <table className="w-full text-left min-w-[560px]">
-                  <thead className="bg-[#1C2541]">
-                    <tr>
-                      {['Name','Category','Sex','Present'].map(h=>(
-                        <th key={h} className={`p-4 text-xs font-semibold tracking-widest uppercase text-[#FAF6EE]/70 ${h==='Present'?'text-right':''}`}>{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filtered.length===0
-                      ? <tr><td colSpan={4} className="p-8 text-center text-[#6B7785]">No participants found.</td></tr>
-                      : filtered.map(p => (
-                        <tr key={p.participant_id} className="border-b border-[#1C2541]/5 last:border-0 hover:bg-[#FAF6EE]">
-                          <td className="p-4 font-medium text-[#1C2541]">{p.full_name}</td>
-                          <td className="p-4">
-                            <span className="text-xs font-semibold uppercase tracking-wide bg-[#D4A857]/15 text-[#6E2C3A] px-2 py-1 rounded-full">{p.category}</span>
-                          </td>
-                          <td className="p-4 text-[#6B7785]">{p.sex==='M'?'Male':'Female'}</td>
-                          <td className="p-4 text-right">
-                            <button onClick={()=>toggle(p.participant_id, p.present)}
-                              className={`w-11 h-6 rounded-full relative transition ${p.present?'bg-[#D4A857]':'bg-[#1C2541]/10'}`}>
-                              <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white transition-transform ${p.present?'translate-x-5':'translate-x-0'}`} />
-                            </button>
-                          </td>
-                        </tr>
-                      ))
-                    }
-                  </tbody>
-                </table>
-              </div>
+              {isAdmin && (
+                <div className="border-t border-[#1C2541]/10 pt-6">
+                  <button
+                    onClick={() => setShowRoster(v => !v)}
+                    className="text-sm font-semibold text-[#6E2C3A] hover:underline mb-4"
+                  >
+                    {showRoster ? 'Hide' : 'Show'} detailed registered roster (admin only)
+                  </button>
+
+                  {showRoster && (
+                    <>
+                      <p className="text-[#6B7785] text-xs mb-4">
+                        This is a separate, per-participant record for registered attendees who checked in with
+                        their own code, useful for corrections. It is not part of the usher headcount above.
+                      </p>
+                      <div className="flex flex-wrap gap-3 mb-4">
+                        <input value={search} onChange={e => setSearch(e.target.value)}
+                          placeholder="Search by name..."
+                          className="flex-1 min-w-48 border border-[#1C2541]/15 bg-white p-2.5 rounded-lg outline-none focus:ring-2 focus:ring-[#D4A857] transition text-sm" />
+                        <ExportButtons
+                          onExcel={() => apiService.exportAttendanceExcel(programId, dayId, sessionId, { search: search || undefined })}
+                          onPdf={() => apiService.exportAttendancePdf(programId, dayId, sessionId, { search: search || undefined })}
+                          excelName={`attendance_${activeSession?.title || 'session'}.xlsx`}
+                          pdfName={`attendance_${activeSession?.title || 'session'}.pdf`}
+                        />
+                      </div>
+                      {rosterSaving && <p className="text-xs text-[#D4A857] mb-2">Saving...</p>}
+                      <div className="bg-white rounded-2xl border border-[#1C2541]/10 overflow-x-auto shadow-sm">
+                        <table className="w-full text-left min-w-[560px]">
+                          <thead className="bg-[#1C2541]">
+                            <tr>
+                              {['Name', 'Category', 'Sex', 'Present'].map(h => (
+                                <th key={h} className={`p-4 text-xs font-semibold tracking-widest uppercase text-[#FAF6EE]/70 ${h === 'Present' ? 'text-right' : ''}`}>{h}</th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {filteredRecords.length === 0
+                              ? <tr><td colSpan={4} className="p-8 text-center text-[#6B7785]">No participants found.</td></tr>
+                              : filteredRecords.map(p => (
+                                <tr key={p.participant_id} className="border-b border-[#1C2541]/5 last:border-0 hover:bg-[#FAF6EE]">
+                                  <td className="p-4 font-medium text-[#1C2541]">{p.full_name}</td>
+                                  <td className="p-4">
+                                    <span className="text-xs font-semibold uppercase tracking-wide bg-[#D4A857]/15 text-[#6E2C3A] px-2 py-1 rounded-full">{p.category}</span>
+                                  </td>
+                                  <td className="p-4 text-[#6B7785]">{p.sex === 'M' ? 'Male' : 'Female'}</td>
+                                  <td className="p-4 text-right">
+                                    <button onClick={() => toggleAttendance(p.participant_id, p.present)}
+                                      className={`w-11 h-6 rounded-full relative transition ${p.present ? 'bg-[#D4A857]' : 'bg-[#1C2541]/10'}`}>
+                                      <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white transition-transform ${p.present ? 'translate-x-5' : 'translate-x-0'}`} />
+                                    </button>
+                                  </td>
+                                </tr>
+                              ))
+                            }
+                          </tbody>
+                        </table>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
             </>
           )}
         </>

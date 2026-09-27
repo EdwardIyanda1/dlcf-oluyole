@@ -2,18 +2,22 @@ import { useState } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import Logo from './Logo';
 import MenuIcon from './MenuIcon';
+import { auth } from '../api';
 import {
   IconOverview, IconPrograms, IconAttendance,
-  IconReports, IconParticipants, IconMessaging, IconArrowLeft,
+  IconReports, IconParticipants, IconMessaging, IconArrowLeft, IconShield,
 } from './icons';
 
+// Every level in `roles` can see the item. Church members never reach this
+// layout at all (see ProtectedRoute on the /admin routes in App.jsx).
 const NAV = [
-  { path: '/admin',              label: 'Overview',       Icon: IconOverview },
-  { path: '/admin/programs',     label: 'Programs',       Icon: IconPrograms },
-  { path: '/admin/attendance',   label: 'Attendance',     Icon: IconAttendance },
-  { path: '/admin/reports',      label: 'Reports',        Icon: IconReports },
-  { path: '/admin/participants', label: 'All Registered', Icon: IconParticipants },
-  { path: '/admin/messaging',    label: 'Messaging',      Icon: IconMessaging },
+  { path: '/admin',              label: 'Overview',       Icon: IconOverview,     roles: ['admin'] },
+  { path: '/admin/programs',     label: 'Programs',       Icon: IconPrograms,     roles: ['admin'] },
+  { path: '/admin/attendance',   label: 'Attendance',     Icon: IconAttendance,   roles: ['admin', 'usher'] },
+  { path: '/admin/reports',      label: 'Reports',        Icon: IconReports,      roles: ['admin'] },
+  { path: '/admin/participants', label: 'All Registered', Icon: IconParticipants, roles: ['admin', 'registration'] },
+  { path: '/admin/messaging',    label: 'Messaging',      Icon: IconMessaging,    roles: ['admin'] },
+  { path: '/admin/users',        label: 'Users',          Icon: IconShield,       roles: ['admin'] },
 ];
 
 export default function AdminLayout() {
@@ -21,6 +25,9 @@ export default function AdminLayout() {
   const [open, setOpen] = useState(false);
   const isActive = (path) =>
     path === '/admin' ? loc.pathname === '/admin' : loc.pathname.startsWith(path);
+
+  const role = auth.getUser()?.role;
+  const items = NAV.filter(item => item.roles.includes(role));
 
   return (
     <div className="min-h-screen bg-[#FAF6EE] flex flex-col md:flex-row">
@@ -50,7 +57,7 @@ export default function AdminLayout() {
           Navigation
         </p>
         <nav className="flex flex-col gap-1">
-          {NAV.map((item) => (
+          {items.map((item) => (
             <Link
               key={item.path}
               to={item.path}

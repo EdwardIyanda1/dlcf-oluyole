@@ -1,5 +1,6 @@
 import re
 import datetime
+from django.contrib.auth.models import User
 from django.db.models import Q, Count
 from django.utils import timezone
 from django.http import HttpResponse
@@ -10,13 +11,15 @@ from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
 from rest_framework.response import Response
 from rest_framework.throttling import AnonRateThrottle
 
-from .models import Participant, Program, RetreatDay, DaySession, Registration, Attendance, BulkMessage
+from .models import Participant, Program, RetreatDay, DaySession, Registration, Attendance, BulkMessage, AttendanceHeadcount, UserProfile
 from .serializers import (
     ParticipantSerializer, ProgramSerializer, RetreatDaySerializer,
     DaySessionSerializer, RegistrationSerializer, AttendanceSerializer,
     AttendanceRosterSerializer, DayReportSerializer, SignupSerializer,
+    AttendanceHeadcountSerializer,
 )
 from .serializers_auth import EmailLoginSerializer, GoogleLoginSerializer
+from .permissions import IsAdmin, IsAdminOrUsher, IsAdminOrRegistration, get_role, ROLE_ADMIN
 from .pagination import StandardPagination
 from .messaging import send_sms, send_bulk_email
 from .exports import (
@@ -39,6 +42,10 @@ class ParticipantViewSet(viewsets.ModelViewSet):
         # Allow standard authenticated users to view/edit their own profile
         if self.action in ('me', 'my_attendance'):
             return [IsAuthenticated()]
+        # The registration desk looks up, corrects, and lists participants,
+        # but doesn't get exports, stats, or delete -- those stay admin-only.
+        if self.action in ('list', 'retrieve', 'update', 'partial_update'):
+            return [IsAuthenticated(), IsAdminOrRegistration()]
         return [IsAuthenticated(), IsAdminUser()]
 
     @action(detail=False, methods=['get', 'patch'], url_path='me')
@@ -289,6 +296,8 @@ class DaySessionViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         if self.action in ('list', 'retrieve'):
             return [IsAuthenticated()]
+        if self.action == 'headcount':
+            return [IsAuthenticated(), IsAdminOrUsher()]
         return [IsAuthenticated(), IsAdminUser()]
 
     def _roster_queryset(self, session, request):
@@ -380,6 +389,60 @@ class DaySessionViewSet(viewsets.ModelViewSet):
 
         return Response({'updated': len(to_create) + len(to_update), 'present': present})
 
+    @action(detail=True, methods=['get', 'post'], url_path='headcount')
+    def headcount(self, request, **kwargs):
+        """
+        The usher's whole-room tally for this session: a count per age
+        category + gender (e.g. Adult Male, Adult Female, Youth Male...),
+        not a lookup of individual registered participants.
+
+        GET  returns the current grid (defaulting every category/sex
+             combination to 0 so the form always has all 8 rows).
+        POST body: {"counts": [{"category": "Adult", "sex": "M", "count": 23}, ...]}
+             upserts whichever rows are sent and returns the refreshed grid.
+        """
+        session = self.get_object()
+        categories = [c for c, _ in Participant.CATEGORY_CHOICES]
+        sexes = ['M', 'F']
+
+        if request.method == 'POST':
+            for row in request.data.get('counts', []):
+                category = row.get('category')
+                sex = row.get('sex')
+                if category not in categories or sex not in sexes:
+                    continue
+                try:
+                    count = max(0, int(row.get('count', 0)))
+                except (TypeError, ValueError):
+                    continue
+                AttendanceHeadcount.objects.update_or_create(
+                    session=session, category=category, sex=sex,
+                    defaults={'count': count, 'recorded_by': request.user},
+                )
+
+        existing = {
+            (h.category, h.sex): h
+            for h in AttendanceHeadcount.objects.filter(session=session).select_related('recorded_by')
+        }
+        rows = []
+        for category in categories:
+            for sex in sexes:
+                row = existing.get((category, sex))
+                rows.append(row if row else AttendanceHeadcount(session=session, category=category, sex=sex, count=0))
+
+        data = AttendanceHeadcountSerializer(rows, many=True).data
+        by_category = {
+            category: {sex: next(r['count'] for r in data if r['category'] == category and r['sex'] == sex)
+                       for sex in sexes}
+            for category in categories
+        }
+        return Response({
+            'session': session.id,
+            'rows': data,
+            'by_category': by_category,
+            'total': sum(r['count'] for r in data),
+        })
+
     @action(detail=True, methods=['get'], url_path='export/excel')
     def export_excel(self, request, **kwargs):
         session = self.get_object()
@@ -412,6 +475,8 @@ class RegistrationViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         if self.action == 'create':
             return [AllowAny()]
+        if self.action in ('list', 'retrieve'):
+            return [IsAuthenticated(), IsAdminOrRegistration()]
         return [IsAuthenticated(), IsAdminUser()]
 
     def get_queryset(self):
@@ -569,3 +634,55 @@ def bulk_message_view(request):
         'sms_sent':   sms_sent,
         'email_sent': email_sent,
     })
+
+
+# ── Permission-level management (Admin only) ──────────────────────────────────
+
+def _user_role_payload(user):
+    participant = getattr(user, 'participant', None)
+    return {
+        'id':          user.id,
+        'username':    user.username,
+        'email':       user.email,
+        'full_name':   (participant.full_name if participant else user.get_full_name()) or user.username,
+        'role':        get_role(user),
+        'is_locked':   user.is_superuser,  # superusers are always admin; role can't be edited here
+        'is_active':   user.is_active,
+        'date_joined': user.date_joined,
+    }
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated, IsAdmin])
+def list_users(request):
+    """Every account with its current permission level, for the Admin user-management page."""
+    users = User.objects.select_related('profile', 'participant').order_by('username')
+    return Response([_user_role_payload(u) for u in users])
+
+
+@api_view(['PATCH'])
+@permission_classes([IsAuthenticated, IsAdmin])
+def set_user_role(request, user_id):
+    """Assign one of the four permission levels to a user: member, registration, usher, admin."""
+    role = request.data.get('role')
+    valid_roles = [choice for choice, _ in UserProfile.ROLE_CHOICES]
+    if role not in valid_roles:
+        return Response({'error': f"role must be one of {valid_roles}."}, status=400)
+
+    try:
+        user = User.objects.get(pk=user_id)
+    except User.DoesNotExist:
+        return Response({'error': 'User not found.'}, status=404)
+
+    if user.is_superuser:
+        return Response({'error': "A superuser's permission level can't be changed here."}, status=400)
+
+    profile, _ = UserProfile.objects.get_or_create(user=user)
+    profile.role = role
+    profile.save()
+
+    # Keep is_staff in sync so Django's own /admin/ login matches the assigned role.
+    user.is_staff = (role == ROLE_ADMIN)
+    user.save(update_fields=['is_staff'])
+
+    return Response(_user_role_payload(user))

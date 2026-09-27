@@ -137,6 +137,59 @@ class Attendance(models.Model):
         return f"{status} {self.participant} – {self.session.title}"
 
 
+class UserProfile(models.Model):
+    """
+    The permission level for a logged-in user. Four tiers:
+      - member       Ordinary church member / registered participant. Can only
+                      see their own profile & attendance record (ProfilePage).
+      - registration Registration Unit: registers participants and staffs the
+                      check-in desk.
+      - usher        Takes the whole-congregation headcount per session.
+      - admin        Full access (also granted automatically to any Django
+                      is_staff/is_superuser account, so existing admins keep
+                      working without a data migration).
+    """
+    ROLE_CHOICES = [
+        ('member',       'Church Member'),
+        ('registration', 'Registration Unit'),
+        ('usher',        'Usher'),
+        ('admin',        'Admin'),
+    ]
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='member')
+
+    def __str__(self):
+        return f"{self.user.username} ({self.get_role_display()})"
+
+
+class AttendanceHeadcount(models.Model):
+    """
+    A tally of everyone physically present for a session, taken by an usher
+    at the door -- by age category and gender, not by looking up individual
+    registered participants. This is deliberately separate from Attendance
+    (which tracks registered participants checking in with their own code):
+    the headcount is meant to capture the whole room, visitors included.
+    """
+    session     = models.ForeignKey(DaySession, on_delete=models.CASCADE, related_name='headcounts')
+    category    = models.CharField(max_length=20, choices=Participant.CATEGORY_CHOICES)
+    sex         = models.CharField(max_length=1, choices=[('M', 'Male'), ('F', 'Female')])
+    count       = models.PositiveIntegerField(default=0)
+    recorded_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True,
+                                     related_name='headcounts_recorded')
+    updated_at  = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = [['session', 'category', 'sex']]
+        ordering = ['category', 'sex']
+
+    @property
+    def label(self):
+        return f"{self.category} {self.get_sex_display()}"
+
+    def __str__(self):
+        return f"{self.session} - {self.label}: {self.count}"
+
+
 class BulkMessage(models.Model):
     """Audit log of every bulk SMS/email blast sent from the admin panel."""
     CHANNEL_CHOICES = [('sms', 'SMS'), ('email', 'Email'), ('both', 'Both')]
@@ -154,3 +207,14 @@ class BulkMessage(models.Model):
 
     def __str__(self):
         return f"{self.get_channel_display()} to {self.recipient_count} on {self.created_at:%Y-%m-%d %H:%M}"
+
+
+# ── Auto-provision a profile (default role: Church Member) for every new user ──
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+
+
+@receiver(post_save, sender=User)
+def create_user_profile(sender, instance, created, **kwargs):
+    if created:
+        UserProfile.objects.get_or_create(user=instance)

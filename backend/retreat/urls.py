@@ -7,7 +7,7 @@ from .views import (
     ParticipantViewSet, ProgramViewSet, RetreatDayViewSet,
     DaySessionViewSet, RegistrationViewSet,
     check_in_by_code, login_view, signup_view, google_login_view,
-    today_sessions, bulk_message_view,
+    today_sessions, bulk_message_view, list_users, set_user_role,
 )
 
 # Top-level router
@@ -35,4 +35,6 @@ urlpatterns = [
     path('auth/google/',         google_login_view,           name='google-login'),
     path('auth/refresh/',        TokenRefreshView.as_view(),  name='token_refresh'),
     path('messages/send/',       bulk_message_view,           name='bulk-message'),
+    path('users/',                list_users,                 name='list-users'),
+    path('users/<int:user_id>/role/', set_user_role,           name='set-user-role'),
 ]

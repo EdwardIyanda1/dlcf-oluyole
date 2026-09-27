@@ -12,6 +12,7 @@ export default function Header() {
   
   const loggedIn = auth.isLoggedIn(); // <-- Get auth status
   const user = auth.getUser();
+  const canSeeAdmin = ['admin', 'registration', 'usher'].includes(user?.role);
 
   const link = (to, label) => (
     <Link
@@ -50,8 +51,8 @@ export default function Header() {
         <nav className="hidden md:flex items-center gap-8">
           {link('/', 'Home')}
           {link('/register', 'Register')}
-          {link('/admin', 'Admin')}
-          {link('/Profile', 'Profile')}
+          {canSeeAdmin && link('/admin', 'Admin')}
+          {loggedIn && link('/profile', 'Profile')}
         </nav>
 
         {/* Mobile Toggle */}
@@ -70,7 +71,8 @@ export default function Header() {
         <nav className="md:hidden absolute top-full left-0 w-full bg-[#1C2541]/80 backdrop-blur-md border-b border-[#D4A857]/20 flex flex-col items-center gap-6 py-8 shadow-xl">
           {link('/', 'Home')}
           {link('/register', 'Register')}
-          {link('/admin', 'Admin')}
+          {canSeeAdmin && link('/admin', 'Admin')}
+          {loggedIn && link('/profile', 'Profile')}
         </nav>
       )}
     </header>

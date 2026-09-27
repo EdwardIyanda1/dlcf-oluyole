@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import Participant, Program, RetreatDay, DaySession, Registration, Attendance
+from django.db.models import Sum
+from .models import Participant, Program, RetreatDay, DaySession, Registration, Attendance, AttendanceHeadcount, UserProfile
 
 
 # ── Core serializers ──────────────────────────────────────────────────────────
@@ -81,6 +82,22 @@ class AttendanceRosterSerializer(serializers.ModelSerializer):
         fields = ['id', 'participant_id', 'full_name', 'school', 'sex', 'category', 'present']
 
 
+# ── Usher headcount (whole-room tally by category + gender) ──────────────────
+
+class AttendanceHeadcountSerializer(serializers.ModelSerializer):
+    label            = serializers.ReadOnlyField()
+    recorded_by_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model  = AttendanceHeadcount
+        fields = ['id', 'session', 'category', 'sex', 'count', 'label', 'recorded_by_name', 'updated_at']
+
+    def get_recorded_by_name(self, obj):
+        if not obj.recorded_by:
+            return None
+        return obj.recorded_by.get_full_name() or obj.recorded_by.username
+
+
 # ── Reports ───────────────────────────────────────────────────────────────────
 
 class DayReportSerializer(serializers.ModelSerializer):
@@ -90,12 +107,13 @@ class DayReportSerializer(serializers.ModelSerializer):
     by_category   = serializers.SerializerMethodField()
     by_sex        = serializers.SerializerMethodField()
     registrations_today = serializers.SerializerMethodField()
+    headcount_total = serializers.SerializerMethodField()
 
     class Meta:
         model  = RetreatDay
         fields = ['id', 'date', 'day_number', 'label',
                   'registrations_today', 'total_present', 'attendance_rate',
-                  'by_category', 'by_sex', 'sessions']
+                  'by_category', 'by_sex', 'headcount_total', 'sessions']
 
     def get_sessions(self, obj):
         return [
@@ -143,6 +161,12 @@ class DayReportSerializer(serializers.ModelSerializer):
     def get_registrations_today(self, obj):
         return Registration.objects.filter(registration_day=obj).count()
 
+    def get_headcount_total(self, obj):
+        """Everyone the ushers physically counted in the room this day, across all its sessions."""
+        return AttendanceHeadcount.objects.filter(session__retreat_day=obj).aggregate(
+            total=Sum('count')
+        )['total'] or 0
+
 
 # ── Auth serializers ──────────────────────────────────────────────────────────
 
@@ -187,6 +211,7 @@ class SignupSerializer(serializers.Serializer):
                 'email':     user.email,
                 'full_name': participant.full_name,
                 'code':      participant.code,
+                'role':      'member',
                 'is_admin':  False,
             },
         }

@@ -103,8 +103,13 @@ export default function ProfilePage() {
             )} */}
             
             <div className="flex justify-center mb-6">
-              <span className={`text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full ${user.is_admin ? 'bg-[#D4A857]/20 text-[#6E2C3A]' : 'bg-[#1C2541]/10 text-[#1C2541]'}`}>
-                {user.is_admin ? 'Administrator' : 'Participant'}
+              <span className={`text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full ${user.role && user.role !== 'member' ? 'bg-[#D4A857]/20 text-[#6E2C3A]' : 'bg-[#1C2541]/10 text-[#1C2541]'}`}>
+                {{
+                  admin: 'Admin',
+                  registration: 'Registration Unit',
+                  usher: 'Usher',
+                  member: 'Church Member',
+                }[user.role] || 'Church Member'}
               </span>
             </div>
             
